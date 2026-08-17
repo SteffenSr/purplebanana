@@ -4,9 +4,9 @@
 // Every asset actually fetched while online gets cached, so a weak or
 // dropped kitchen wifi signal doesn't interrupt a recipe already in
 // progress. On top of that, PRECACHE_URLS below is populated at build
-// time (see scripts/generate-sw-precache.mjs, run as "postbuild") with
-// every recipe/cook route AND every hashed JS/CSS chunk from `out/`, so a
-// recipe opens offline even on the very first visit — a service worker
+// time (see scripts/generate-sw-precache.mjs, chained onto `npm run build`)
+// with every recipe/cook route AND every hashed JS/CSS chunk from `out/`,
+// so a recipe opens offline even on the very first visit — a service worker
 // never controls the page load that first registers it, so without this
 // precache step a cold offline visit could show the right cached HTML for
 // a recipe page but fail to load the JS it needs to hydrate.

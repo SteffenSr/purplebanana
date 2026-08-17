@@ -61,21 +61,36 @@ can't opportunistically cache that load's own requests:
   filenames unknown until after the build runs, so they can't be
   hand-written into the service worker source.
 
-`scripts/generate-sw-precache.mjs` closes both gaps. It runs as the
-`postbuild` step (after `next build`, so `out/` already exists) and
-rewrites the *built* `out/sw.js` (not the `public/sw.js` source template)
-with a precache list covering every recipe/cook route (from
-`seed-recipes.ts`) plus every hashed file under `out/_next/static`. The
-service worker's `install` handler fetches and caches that whole list
-before it ever activates, so as long as the service worker has installed
-once — which happens on the very first visit, before it even controls that
-page — every recipe opens offline from that point on, with no second
-reload required. `CACHE_VERSION` is a hash of the precached file list, so
-a build that changes any asset gets a fresh cache namespace and evicts the
-old one (see the `activate` handler) for returning users.
+`scripts/generate-sw-precache.mjs` closes both gaps. It runs after
+`next build` (so `out/` already exists) and rewrites the *built*
+`out/sw.js` (not the `public/sw.js` source template) with a precache list
+covering every recipe/cook route (from `seed-recipes.ts`) plus every
+hashed file under `out/_next/static`. The service worker's `install`
+handler fetches and caches that whole list before it ever activates, so as
+long as the service worker has installed once — which happens on the very
+first visit, before it even controls that page — every recipe opens
+offline from that point on, with no second reload required.
+`CACHE_VERSION` is a hash of the precached file list, so a build that
+changes any asset gets a fresh cache namespace and evicts the old one (see
+the `activate` handler) for returning users.
 
-If a recipe is ever added or removed, `postbuild` regenerates this list
+If a recipe is ever added or removed, this step regenerates the list
 automatically — nothing to remember to update by hand.
+
+**This step is chained onto `package.json`'s `"build"` script with `&&`
+(`next build && node scripts/generate-sw-precache.mjs`), deliberately
+*not* an npm `postbuild` lifecycle hook.** The first production deploy of
+this app shipped with an empty precache list and this exact offline bug
+still present, despite the script working perfectly locally — because
+Vercel's inferred build command for a detected Next.js project is
+`next build` directly, not `npm run build`, and npm's `pre`/`postbuild`
+hooks only fire for the latter. `vercel.json`'s `"buildCommand": "npm run
+build"` pins the deploy host to the command that actually runs our full
+build, independent of the host's own framework-detection defaults or
+dashboard settings. If this precache step is ever split back out into a
+separate `postbuild` script, or `vercel.json` is removed, this bug comes
+back — silently, since `npm run build` run locally would still look
+correct either way.
 
 ## Navigation uses plain `<a>`, not `next/link`
 

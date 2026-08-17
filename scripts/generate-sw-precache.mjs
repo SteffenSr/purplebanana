@@ -1,5 +1,12 @@
-// Runs after `next build` (see package.json's "postbuild" script) and
-// rewrites the BUILT out/sw.js — not the public/sw.js source template —
+// Runs after `next build` — chained via `&&` onto package.json's "build"
+// script, deliberately NOT an npm "postbuild" hook, because deploy hosts
+// (Vercel among them) often invoke `next build` directly rather than
+// `npm run build`, which silently skips postbuild/prebuild lifecycle
+// hooks but still runs whatever "build" literally contains. See
+// vercel.json and docs/architecture.md for the full story — this shipped
+// broken once already because of exactly that gap.
+//
+// Rewrites the BUILT out/sw.js — not the public/sw.js source template —
 // with a precache list covering every recipe/cook route plus every hashed
 // JS/CSS chunk actually produced by this build. Without the hashed chunks
 // included, a cold offline visit could serve the right cached HTML for a

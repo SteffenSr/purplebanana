@@ -32,10 +32,15 @@ If a change works against either of those two goals, it's wrong even if it
   the app looks right on a cold offline load).
 - **Hand-rolled service worker** (`public/sw.js`), network-first with
   cache fallback for same-origin GETs. No Workbox/next-pwa dependency.
-  `scripts/generate-sw-precache.mjs` runs as `npm run build`'s `postbuild`
-  step and rewrites the *built* `out/sw.js` with a full precache list
-  (every recipe/cook route + every hashed JS/CSS chunk) so a recipe opens
-  offline on the very first visit, not just after a second reload.
+  `scripts/generate-sw-precache.mjs` runs as the second half of the
+  `"build"` npm script (chained with `&&`, deliberately *not* an npm
+  `postbuild` lifecycle hook — hosts like Vercel often invoke `next build`
+  directly rather than `npm run build`, which silently skips lifecycle
+  hooks; `vercel.json`'s `buildCommand` pins Vercel to `npm run build` so
+  this can't be skipped) and rewrites the *built* `out/sw.js` with a full
+  precache list (every recipe/cook route + every hashed JS/CSS chunk) so a
+  recipe opens offline on the very first visit, not just after a second
+  reload.
 - Internal navigation uses plain `<a>`, not `next/link`'s `<Link>` — see
   docs/architecture.md's "Navigation uses plain `<a>`" section for why.
 
@@ -57,7 +62,8 @@ src/lib/
 public/
   manifest.json, icon*.svg, sw.js   PWA + offline shell (sw.js is a template; see below)
 scripts/
-  generate-sw-precache.mjs  postbuild step, writes the real precache list into out/sw.js
+  generate-sw-precache.mjs  2nd half of `npm run build`, writes the real precache list into out/sw.js
+vercel.json                pins Vercel's build command to `npm run build` (see above)
 docs/
   architecture.md            why the static-export + IndexedDB split works this way
   design-system.md           the type/color/spacing tokens and the reasoning behind them

@@ -5,8 +5,7 @@
   "description": "Kitchen Recipes - a mobile-first, offline-capable recipe reader",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "postbuild": "node scripts/generate-sw-precache.mjs",
+    "build": "next build && node scripts/generate-sw-precache.mjs",
     "start": "npx serve out",
     "lint": "eslint ."
   },

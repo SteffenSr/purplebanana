@@ -6,11 +6,13 @@ tools: Read, Edit, Grep, Glob, Bash
 
 You own the offline data path: `src/lib/db.ts` (Dexie/IndexedDB schema and
 queries), `src/lib/hooks.ts` (client data access), `public/sw.js` (the
-service worker template), and `scripts/generate-sw-precache.mjs` (the
-`postbuild` step that rewrites the *built* `out/sw.js` with the real
-precache list). This app has no backend — IndexedDB in the browser is the
-real database, and the service worker is what lets the static export load
-at all with no connection. Treat all of it carefully.
+service worker template), `scripts/generate-sw-precache.mjs` (chained onto
+`npm run build` to rewrite the *built* `out/sw.js` with the real precache
+list), and `vercel.json` (pins the deploy host to actually run
+`npm run build` — see below for why that matters). This app has no
+backend — IndexedDB in the browser is the real database, and the service
+worker is what lets the static export load at all with no connection.
+Treat all of it carefully.
 
 Rules:
 
@@ -31,13 +33,24 @@ Rules:
   hash of that list so a changed build evicts old caches automatically).
   If you change what should be precached, edit the generator script, not
   the committed list.
+- The generator is chained onto `"build"` with `&&` (`next build && node
+  scripts/generate-sw-precache.mjs`) — deliberately *not* an npm
+  `postbuild` lifecycle hook, because a real deploy already shipped once
+  without the precache list: Vercel's default build command invokes
+  `next build` directly rather than `npm run build`, which silently skips
+  `pre`/`postbuild` hooks but still runs whatever the `"build"` script
+  literally contains. `vercel.json`'s `buildCommand: "npm run build"`
+  closes that gap. Don't split the generator back out into a `postbuild`
+  script, and don't remove `vercel.json` — either change reintroduces the
+  exact bug this fixed, silently, since the local build keeps working fine
+  either way and only the deployed host breaks.
 - Internal navigation uses plain `<a>`, never `next/link`'s `<Link>` — its
   client-side soft navigation has no offline fallback. Don't reintroduce
   `Link` for in-app links; see docs/architecture.md's "Navigation uses
   plain `<a>`" section for why.
 - After changes here, manually verify the offline path end to end: build
-  (`npm run build` — this runs the postbuild precache step automatically),
-  serve `out/` (e.g. `npx serve out`, no `-s`/single-page flag — that flag
+  (`npm run build`, and check its output includes the "Precached N URLs"
+  line), serve `out/` (e.g. `npx serve out`, no `-s`/single-page flag — that flag
   rewrites every route to `index.html` and will make every page look
   identical), load the app **once** online, then disable the network
   (devtools, or a real offline test) and confirm a recipe you never

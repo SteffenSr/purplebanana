@@ -17,12 +17,17 @@ order, and report the actual output rather than assuming success:
 3. Spot-check that `out/` contains a prerendered HTML file for the home
    page and for each recipe's `/recipes/<id>/` and `/recipes/<id>/cook/`
    routes.
-4. Confirm the build's `postbuild` step ran and reported precaching a
-   nonzero number of recipe routes and JS/CSS chunks into `out/sw.js`
-   (`npm run build`'s own output includes this — see
-   scripts/generate-sw-precache.mjs). If it's missing or reports 0 chunks,
-   offline navigation into a recipe will silently break — treat that as a
-   build failure, not a warning.
+4. Confirm `npm run build`'s output includes a "Precached N URLs..." line
+   from `scripts/generate-sw-precache.mjs` (it's chained onto the end of
+   the `"build"` script with `&&`, not an npm `postbuild` hook — deployment
+   hosts like Vercel often invoke `next build` directly, which silently
+   skips `postbuild`/`prebuild` lifecycle hooks but still runs whatever is
+   literally inside `"build"`). If that line is missing or reports 0
+   chunks, offline navigation into a recipe will silently break in
+   production — treat that as a build failure, not a warning. Also check
+   `vercel.json` still exists and pins `buildCommand` to `npm run build` —
+   removing it (or a host ignoring it) would reintroduce this exact bug
+   even with the script itself unchanged.
 
 If you serve `out/` locally to spot-check anything (e.g. `npx serve out`),
 do not pass `-s`/`--single` — that flag rewrites every route to
