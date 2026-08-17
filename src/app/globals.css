@@ -1,0 +1,499 @@
+/* ---------------------------------------------------------------------
+   Design tokens
+   Built for reading at arm's length in a kitchen: large type, very high
+   contrast, big touch targets. System font stack only — no webfont
+   download, so the app looks right even on a cold, offline load.
+   --------------------------------------------------------------------- */
+:root {
+  --color-bg: #fffdf7;
+  --color-surface: #ffffff;
+  --color-text: #17131f;
+  --color-text-muted: #4b4458;
+  --color-border: #e7e0d8;
+
+  --color-primary: #6d28d9; /* purple */
+  --color-primary-contrast: #ffffff;
+  --color-accent: #f5c518; /* banana yellow */
+  --color-accent-contrast: #241d00;
+  --color-success: #1a7a3c;
+  --color-danger: #b3261e;
+
+  --font-size-base: 1.125rem; /* 18px, larger than typical body text */
+  --font-size-lg: 1.375rem;
+  --font-size-xl: 1.75rem;
+  --font-size-2xl: 2.25rem;
+  --font-size-step: clamp(1.75rem, 4vw + 1rem, 3.25rem);
+
+  --space-1: 0.5rem;
+  --space-2: 0.75rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+  --space-6: 3rem;
+
+  --radius: 1rem;
+  --radius-lg: 1.5rem;
+  --tap-min: 3.25rem; /* minimum touch target, generous for greasy/wet fingers */
+
+  --shadow-card: 0 2px 10px rgba(23, 19, 31, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #14111b;
+    --color-surface: #1f1a29;
+    --color-text: #f7f3ff;
+    --color-text-muted: #c4b9d9;
+    --color-border: #352c44;
+
+    --color-primary: #a78bfa;
+    --color-primary-contrast: #1a1025;
+    --color-accent: #f5c518;
+    --color-accent-contrast: #241d00;
+    --color-success: #4ade80;
+    --color-danger: #ff6b6b;
+
+    --shadow-card: 0 2px 14px rgba(0, 0, 0, 0.45);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  margin: 0 0 var(--space-2);
+}
+
+h1 {
+  font-size: var(--font-size-2xl);
+}
+
+h2 {
+  font-size: var(--font-size-xl);
+}
+
+p {
+  margin: 0 0 var(--space-3);
+}
+
+button {
+  font: inherit;
+}
+
+.container {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+
+/* ---------------------------------------------------------------------
+   Header / navigation
+   --------------------------------------------------------------------- */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-header__inner {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.app-header__brand-mark {
+  font-size: 1.75rem;
+}
+
+/* ---------------------------------------------------------------------
+   Status pill (online / offline)
+   --------------------------------------------------------------------- */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  white-space: nowrap;
+}
+
+.status-pill__dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: var(--color-success);
+}
+
+.status-pill--offline .status-pill__dot {
+  background: var(--color-danger);
+}
+
+/* ---------------------------------------------------------------------
+   Buttons
+   --------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap-min);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.06s ease, background 0.15s ease;
+  touch-action: manipulation;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.btn-accent {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-icon {
+  min-width: var(--tap-min);
+  padding: 0.75rem;
+  border-radius: 999px;
+  background: transparent;
+  border-color: var(--color-border);
+  font-size: var(--font-size-lg);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------
+   Recipe grid + cards
+   --------------------------------------------------------------------- */
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-4);
+}
+
+.recipe-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+}
+
+.recipe-card__emoji {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.recipe-card__title {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+}
+
+.recipe-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.recipe-card__fav {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  border: none;
+  background: transparent;
+  font-size: 1.75rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.25rem;
+}
+
+/* ---------------------------------------------------------------------
+   Recipe detail
+   --------------------------------------------------------------------- */
+.recipe-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.recipe-hero__emoji {
+  font-size: 4rem;
+}
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 var(--space-4);
+}
+
+.badge {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.section-title {
+  margin-top: var(--space-5);
+}
+
+.ingredient-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ingredient-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: var(--font-size-lg);
+}
+
+.ingredient-list li::before {
+  content: "";
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-top: 0.55rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.step-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.step-preview-list li {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: var(--font-size-lg);
+}
+
+.step-preview-list__number {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------------------
+   Cook mode — the core "readable across the kitchen" screen
+   --------------------------------------------------------------------- */
+.cook-mode {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+}
+
+.cook-mode__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cook-mode__progress {
+  flex: 1;
+  margin: 0 var(--space-4);
+  height: 0.6rem;
+  background: var(--color-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cook-mode__progress-bar {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 0.2s ease;
+}
+
+.cook-mode__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-5);
+  gap: var(--space-4);
+  overflow-y: auto;
+}
+
+.cook-mode__step-label {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cook-mode__step-text {
+  font-size: var(--font-size-step);
+  font-weight: 700;
+  max-width: 40rem;
+}
+
+.cook-mode__timer {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-5);
+}
+
+.cook-mode__nav {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.cook-mode__nav .btn {
+  flex: 1;
+  font-size: var(--font-size-xl);
+}
+
+.cook-mode__done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------
+   Utility
+   --------------------------------------------------------------------- */
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --font-size-base: 1.1875rem;
+  }
+}
