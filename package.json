@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/generate-sw-precache.mjs",
     "start": "npx serve out",
     "lint": "eslint ."
   },

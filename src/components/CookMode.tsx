@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useRecipe } from "@/lib/hooks";
 import { markCooked } from "@/lib/db";
 import { useWakeLock } from "@/lib/use-wake-lock";
@@ -46,9 +45,9 @@ export function CookMode({ id }: { id: string }) {
       <div className="cook-mode">
         <div className="cook-mode__body">
           <p className="empty-state">This recipe has no steps to cook.</p>
-          <Link href={`/recipes/${id}/`} className="btn btn-secondary">
+          <a href={`/recipes/${id}/`} className="btn btn-secondary">
             ← Back
-          </Link>
+          </a>
         </div>
       </div>
     );
@@ -67,9 +66,9 @@ export function CookMode({ id }: { id: string }) {
               {recipe.emoji}
             </span>
             <h1>Enjoy your {recipe.title}!</h1>
-            <Link href={`/recipes/${id}/`} className="btn btn-primary">
+            <a href={`/recipes/${id}/`} className="btn btn-primary">
               Back to recipe
-            </Link>
+            </a>
           </div>
         </div>
       </div>
@@ -81,9 +80,10 @@ export function CookMode({ id }: { id: string }) {
   return (
     <div className="cook-mode">
       <div className="cook-mode__top">
-        <Link href={`/recipes/${id}/`} className="btn btn-icon" aria-label="Exit cook mode">
+        {/* Plain <a>: see RecipeCard.tsx for why this app avoids next/link. */}
+        <a href={`/recipes/${id}/`} className="btn btn-icon" aria-label="Exit cook mode">
           ✕
-        </Link>
+        </a>
         <div
           className="cook-mode__progress"
           role="progressbar"

@@ -46,19 +46,51 @@ of scattered through the UI.
 `public/sw.js` is a hand-rolled service worker (no Workbox/next-pwa
 dependency) registered from `src/components/ServiceWorkerRegister.tsx`. It
 uses a network-first, cache-fallback strategy for same-origin GET requests:
-every page and asset visited while online gets cached, and a dropped
-connection falls back to the cached copy (or `/` for unmatched
-navigations). Combined with IndexedDB already holding the recipe data, a
-device that has opened the app once can open it again with zero network
-access.
+every asset actually fetched while online gets cached, and a dropped
+connection falls back to the cached copy (or `/` for an uncached
+navigation).
 
-One inherent caveat (not a bug, standard service worker behavior): a
-service worker never controls the page load that first registers it, so
-the very first visit's own JS/CSS chunks are fetched normally and only
-start getting cached once the worker activates and calls `clients.claim()`.
-In practice this means full offline support kicks in from the **second**
-page load onward, not the very first — a second load (even the same
-session, e.g. a hard refresh) is what completes the app-shell cache.
+That alone isn't enough to guarantee a recipe opens offline on a first-ever
+visit, for two reasons that both trace back to the same root cause — a
+service worker never controls the page load that first registers it, so it
+can't opportunistically cache that load's own requests:
+
+- **Recipe pages you never visited while online** wouldn't be cached at
+  all if caching only happened opportunistically.
+- **The hydration JS/CSS chunks** a route needs are content-hashed
+  filenames unknown until after the build runs, so they can't be
+  hand-written into the service worker source.
+
+`scripts/generate-sw-precache.mjs` closes both gaps. It runs as the
+`postbuild` step (after `next build`, so `out/` already exists) and
+rewrites the *built* `out/sw.js` (not the `public/sw.js` source template)
+with a precache list covering every recipe/cook route (from
+`seed-recipes.ts`) plus every hashed file under `out/_next/static`. The
+service worker's `install` handler fetches and caches that whole list
+before it ever activates, so as long as the service worker has installed
+once — which happens on the very first visit, before it even controls that
+page — every recipe opens offline from that point on, with no second
+reload required. `CACHE_VERSION` is a hash of the precached file list, so
+a build that changes any asset gets a fresh cache namespace and evicts the
+old one (see the `activate` handler) for returning users.
+
+If a recipe is ever added or removed, `postbuild` regenerates this list
+automatically — nothing to remember to update by hand.
+
+## Navigation uses plain `<a>`, not `next/link`
+
+Every internal link in this app is a plain `<a href>`, not `next/link`'s
+`<Link>`. That's deliberate: `<Link>` does a client-side "soft" navigation
+that fetches a small RSC data payload for the target route over the
+network on every click, with no offline fallback — if that fetch fails,
+the navigation just silently aborts. It only worked offline when that
+exact payload happened to already be cached, which wasn't reliable
+(viewport-based prefetch timing, cache-key/token mismatches). A plain
+`<a>` triggers a full document navigation instead, which goes through the
+service worker's own cache-fallback logic above — the thing already
+verified to work offline. For an app whose whole premise is "must not fail
+mid-recipe with no signal," a full page load beats a snappier transition
+that can silently do nothing.
 
 ## Cook mode
 

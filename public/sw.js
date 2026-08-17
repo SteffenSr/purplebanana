@@ -1,19 +1,29 @@
-// Minimal offline app shell for the static export.
+// Offline app shell for the static export.
 //
 // Strategy: network-first, cache-fallback for same-origin GET requests.
-// Every page/asset the cook actually visits while online gets cached, so a
-// weak or dropped kitchen wifi signal doesn't interrupt a recipe already in
-// progress. Bump CACHE_VERSION when shipping a release that should replace
-// previously cached assets.
-const CACHE_VERSION = "v1";
+// Every asset actually fetched while online gets cached, so a weak or
+// dropped kitchen wifi signal doesn't interrupt a recipe already in
+// progress. On top of that, PRECACHE_URLS below is populated at build
+// time (see scripts/generate-sw-precache.mjs, run as "postbuild") with
+// every recipe/cook route AND every hashed JS/CSS chunk from `out/`, so a
+// recipe opens offline even on the very first visit — a service worker
+// never controls the page load that first registers it, so without this
+// precache step a cold offline visit could show the right cached HTML for
+// a recipe page but fail to load the JS it needs to hydrate.
+//
+// This file as committed is just the template (CACHE_VERSION "dev",
+// PRECACHE_URLS holding only the fallback shell) — `npm run build`
+// overwrites the real precache list into the *built* out/sw.js, not this
+// source file, so editing PRECACHE_URLS here has no lasting effect.
+const CACHE_VERSION = "dev";
 const CACHE_NAME = `kitchen-recipes-${CACHE_VERSION}`;
-const APP_SHELL = ["/", "/manifest.json", "/icon.svg", "/icon-maskable.svg"];
+const PRECACHE_URLS = ["/", "/manifest.json", "/icon.svg", "/icon-maskable.svg"];
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      Promise.all(APP_SHELL.map((url) => cache.add(url).catch(() => {})))
+      Promise.all(PRECACHE_URLS.map((url) => cache.add(url).catch(() => {})))
     )
   );
 });

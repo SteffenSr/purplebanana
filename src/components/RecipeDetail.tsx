@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRecipe } from "@/lib/hooks";
 import { toggleFavorite } from "@/lib/db";
 
@@ -19,9 +18,10 @@ export function RecipeDetail({ id }: { id: string }) {
     return (
       <div className="container">
         <p className="empty-state">Recipe not found on this device.</p>
-        <Link href="/" className="btn btn-secondary">
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- full navigation needed offline, see RecipeCard.tsx */}
+        <a href="/" className="btn btn-secondary">
           ← Back to recipes
-        </Link>
+        </a>
       </div>
     );
   }
@@ -33,9 +33,12 @@ export function RecipeDetail({ id }: { id: string }) {
 
   return (
     <div className="container">
-      <Link href="/" className="btn btn-secondary btn-icon" aria-label="Back to recipes">
+      {/* Plain <a>: full-page navigation, so it works via the service
+          worker's cache even when next/link's soft navigation can't. */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+      <a href="/" className="btn btn-secondary btn-icon" aria-label="Back to recipes">
         ←
-      </Link>
+      </a>
 
       <div className="recipe-hero">
         <span className="recipe-hero__emoji" aria-hidden>
@@ -66,9 +69,9 @@ export function RecipeDetail({ id }: { id: string }) {
         {lastCooked && <span className="badge">Last cooked {lastCooked}</span>}
       </div>
 
-      <Link href={`/recipes/${recipe.id}/cook/`} className="btn btn-primary btn-block">
+      <a href={`/recipes/${recipe.id}/cook/`} className="btn btn-primary btn-block">
         ▶ Start Cooking
-      </Link>
+      </a>
 
       <h2 className="section-title">Ingredients</h2>
       <ul className="ingredient-list">

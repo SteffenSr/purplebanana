@@ -32,6 +32,12 @@ If a change works against either of those two goals, it's wrong even if it
   the app looks right on a cold offline load).
 - **Hand-rolled service worker** (`public/sw.js`), network-first with
   cache fallback for same-origin GETs. No Workbox/next-pwa dependency.
+  `scripts/generate-sw-precache.mjs` runs as `npm run build`'s `postbuild`
+  step and rewrites the *built* `out/sw.js` with a full precache list
+  (every recipe/cook route + every hashed JS/CSS chunk) so a recipe opens
+  offline on the very first visit, not just after a second reload.
+- Internal navigation uses plain `<a>`, not `next/link`'s `<Link>` — see
+  docs/architecture.md's "Navigation uses plain `<a>`" section for why.
 
 ## Where things live
 
@@ -49,7 +55,9 @@ src/lib/
   use-wake-lock.ts          keeps the screen on during cook mode
   use-countdown.ts          per-step timer
 public/
-  manifest.json, icon*.svg, sw.js   PWA + offline shell
+  manifest.json, icon*.svg, sw.js   PWA + offline shell (sw.js is a template; see below)
+scripts/
+  generate-sw-precache.mjs  postbuild step, writes the real precache list into out/sw.js
 docs/
   architecture.md            why the static-export + IndexedDB split works this way
   design-system.md           the type/color/spacing tokens and the reasoning behind them

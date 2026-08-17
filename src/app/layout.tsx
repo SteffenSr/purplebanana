@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Link from "next/link";
 import "./globals.css";
 import { OnlineStatus } from "@/components/OnlineStatus";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
@@ -33,12 +32,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorkerRegister />
         <header className="app-header">
           <div className="app-header__inner">
-            <Link href="/" className="app-header__brand">
+            {/* Plain <a>: see RecipeCard.tsx for why this app avoids next/link. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/" className="app-header__brand">
               <span className="app-header__brand-mark" aria-hidden>
                 🍳
               </span>
               Kitchen Recipes
-            </Link>
+            </a>
             <OnlineStatus />
           </div>
         </header>
