@@ -623,98 +623,84 @@ export const seedRecipes: Recipe[] = [
       {
         order: 3,
         instruction: {
-          da: "Dæk skålen til, og sæt den i køleskabet for at marinere.",
-          en: "Cover the bowl and refrigerate to marinate.",
+          da: "Dæk skålen til, og sæt den i køleskabet for at marinere i mindst 1 time — helst natten over.",
+          en: "Cover the bowl and refrigerate to marinate for at least 1 hour — ideally overnight.",
         },
         timerMinutes: 60,
       },
       {
         order: 4,
         instruction: {
-          da: "Rist garam masala, koriander, spidskommen og gurkemeje kort på en tør, varm pande, til de dufter.",
-          en: "Toast the garam masala, coriander, cumin, and turmeric briefly in a dry, hot pan until fragrant.",
+          da: "Rist garam masala, koriander, spidskommen og gurkemeje kort i en stor gryde, til de dufter.",
+          en: "Toast the garam masala, coriander, cumin, and turmeric briefly in a large pot until fragrant.",
         },
       },
       {
         order: 5,
         instruction: {
-          da: "Hæld de ristede krydderier i en skål, og sæt dem til side.",
-          en: "Tip the toasted spices into a bowl and set aside.",
-        },
-      },
-      {
-        order: 6,
-        instruction: {
-          da: "Varm olie i en gryde ved middel varme.",
-          en: "Heat oil in a pot over medium heat.",
-        },
-      },
-      {
-        order: 7,
-        instruction: {
-          da: "Tilsæt løget, og steg det, til det er blødt.",
-          en: "Add the onion and cook until soft.",
+          da: "Tilsæt olie og løget til gryden med krydderierne, og steg, til løget er blødt.",
+          en: "Add the oil and onion to the pot with the spices, and cook until the onion is soft.",
         },
         timerMinutes: 5,
       },
       {
-        order: 8,
+        order: 6,
         instruction: {
           da: "Rør hvidløg og tomatpuré i, og steg et par minutter.",
           en: "Stir in the garlic and tomato paste and cook for a couple of minutes.",
         },
       },
       {
-        order: 9,
+        order: 7,
         instruction: {
           da: "Tilsæt de marinerede Chicken Bites sammen med al marinaden.",
           en: "Add the marinated Chicken Bites along with all the marinade.",
         },
       },
       {
-        order: 10,
+        order: 8,
         instruction: {
-          da: "Rør de ristede krydderier, de hakkede tomater, chili og ingefær i.",
-          en: "Stir in the toasted spices, chopped tomatoes, chili, and ginger.",
+          da: "Rør de hakkede tomater, chili, ingefær og bukkehornsbladene i.",
+          en: "Stir in the chopped tomatoes, chili, ginger, and fenugreek leaves.",
         },
       },
       {
-        order: 11,
+        order: 9,
         instruction: {
           da: "Bring det i kog, og skru derefter ned for varmen.",
           en: "Bring to a boil, then reduce the heat.",
         },
       },
       {
-        order: 12,
+        order: 10,
         instruction: {
-          da: "Rør bukkehornsbladene og Naturli' Smørbar i, til smørret er smeltet.",
-          en: "Stir in the fenugreek leaves and Naturli' butter until melted.",
+          da: "Rør Naturli' Smørbar i, til det er smeltet.",
+          en: "Stir in the Naturli' butter until melted.",
         },
       },
       {
-        order: 13,
+        order: 11,
         instruction: {
-          da: "Lad retten simre ved svag varme.",
-          en: "Let the dish simmer over low heat.",
+          da: "Lad retten simre ved svag varme i en halv times tid.",
+          en: "Let the dish simmer over low heat for about half an hour.",
         },
         timerMinutes: 30,
       },
       {
-        order: 14,
+        order: 12,
         instruction: {
           da: "Rør plantefløden i, og smag til med salt, lige inden servering.",
           en: "Stir in the plant cream and season with salt just before serving.",
         },
       },
       {
-        order: 15,
+        order: 13,
         instruction: {
           da: "Server med ris, naan og chutney.",
           en: "Serve with rice, naan, and chutney.",
         },
       },
     ],
-    updatedAt: "2026-08-18T14:35:00.000Z",
+    updatedAt: "2026-08-18T15:10:00.000Z",
   },
 ];
