@@ -41,6 +41,15 @@ at very large type, on a screen someone is reading from across a kitchen:
 - `id` is a stable kebab-case slug; it's also the static-export route
   segment (`/recipes/<id>/`), so never change an existing recipe's `id`
   without checking whether anything else references it.
+- **Whenever you edit an existing recipe's content** (title, description,
+  ingredients, steps, tags, etc.), bump its `updatedAt` to the current
+  date. `ensureSeeded()` in `src/lib/db.ts` syncs this file into a
+  returning user's already-seeded IndexedDB on every launch, and it only
+  refreshes a recipe whose bundled `updatedAt` is newer than what's
+  already stored — an unbumped `updatedAt` means your edit silently never
+  reaches anyone who already has the app open on their device. New
+  recipes and removed recipes propagate automatically either way (added
+  or deleted by id), so this only matters for edits to existing ones.
 
 After editing, sanity-check the file still matches the `Recipe` type (step
 `order` values are sequential starting at 1, all required fields present).

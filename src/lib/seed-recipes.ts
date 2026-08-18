@@ -40,7 +40,7 @@ export const seedRecipes: Recipe[] = [
       { order: 8, instruction: "Drain the pasta and toss it into the sauce until fully coated." },
       { order: 9, instruction: "Top with fresh basil and serve immediately." },
     ],
-    updatedAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-08-18T00:00:00.000Z",
   },
   {
     id: "morning-oat-porridge",
@@ -64,7 +64,7 @@ export const seedRecipes: Recipe[] = [
       { order: 3, instruction: "Remove from heat and stir in the maple syrup." },
       { order: 4, instruction: "Spoon into bowls and add your toppings." },
     ],
-    updatedAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-08-18T00:00:00.000Z",
   },
   {
     id: "red-lentil-dal",
@@ -101,7 +101,7 @@ export const seedRecipes: Recipe[] = [
       { order: 9, instruction: "Reduce the heat and simmer until the lentils are soft.", timerMinutes: 20 },
       { order: 10, instruction: "Season with salt and serve topped with fresh cilantro." },
     ],
-    updatedAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-08-18T00:00:00.000Z",
   },
   {
     id: "yellow-split-pea-dal-ginger",
@@ -138,7 +138,7 @@ export const seedRecipes: Recipe[] = [
       { order: 9, instruction: "Simmer until the split peas are soft and creamy.", timerMinutes: 35 },
       { order: 10, instruction: "Season with salt and stir in the lemon juice before serving." },
     ],
-    updatedAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-08-18T00:00:00.000Z",
   },
   {
     id: "coconut-spinach-dal",
@@ -175,6 +175,6 @@ export const seedRecipes: Recipe[] = [
       { order: 9, instruction: "Stir in the spinach and cook until wilted." },
       { order: 10, instruction: "Season with salt and serve." },
     ],
-    updatedAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-08-18T00:00:00.000Z",
   },
 ];

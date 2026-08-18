@@ -15,17 +15,20 @@ state or run dynamic routes on demand.** So:
   what gives it its own page.
 - The actual data the UI reads and writes at runtime lives in the
   **browser's IndexedDB** (via Dexie, `src/lib/db.ts`), not in the static
-  HTML. `ensureSeeded()` copies `seed-recipes.ts` into IndexedDB once, on
-  first load, and every read after that goes through IndexedDB. This is
-  what makes per-device state (favorites, last-cooked date) possible
-  without a backend, and it's the actual mechanism behind "works offline":
-  once seeded, the app never needs to fetch recipe content again.
+  HTML. `ensureSeeded()` syncs `seed-recipes.ts` into IndexedDB on every
+  launch — not just the first one — and every read goes through IndexedDB.
+  This is what makes per-device state (favorites, last-cooked date)
+  possible without a backend, and it's the actual mechanism behind "works
+  offline": once synced, the app doesn't need to fetch recipe content
+  again until the next time it's opened online.
 
 ## Layers
 
 ```
 seed-recipes.ts  (build-time constant, ships in the JS bundle)
-       │  ensureSeeded() — copy-once, only if the store is empty
+       │  ensureSeeded() — adds new recipes, updates changed ones
+       │  (by comparing updatedAt, preserving favorite/lastCookedAt),
+       │  removes recipes no longer present in this file
        ▼
    IndexedDB      (src/lib/db.ts — Dexie, the real runtime database)
        │  getAllRecipes / getRecipe / toggleFavorite / markCooked
@@ -35,6 +38,18 @@ seed-recipes.ts  (build-time constant, ships in the JS bundle)
        ▼
   components      (RecipeCard, RecipeDetail, CookMode)
 ```
+
+An early version of `ensureSeeded()` really did only seed once, on an
+empty store — which meant a returning user's device stayed stuck on
+whatever recipes existed the very first time they opened the app,
+permanently. No amount of reloading, cache-clearing, or redeploying could
+ever change that, since IndexedDB isn't touched by any of those. The fix
+was to make every launch reconcile IndexedDB against the current
+`seed-recipes.ts`, not just seed an empty store once — see the
+`ensureSeeded()` doc comment in `src/lib/db.ts` for the exact merge rules,
+and note the `recipe-content` subagent's requirement to bump `updatedAt`
+on any content edit, or that edit will never reach anyone who's already
+opened the app.
 
 Components never touch `db.recipes` directly — always through
 `src/lib/hooks.ts` or the exported functions in `src/lib/db.ts`. That keeps

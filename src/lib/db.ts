@@ -20,12 +20,41 @@ class RecipeDatabase extends Dexie {
 
 export const db = new RecipeDatabase();
 
-/** Copies the bundled seed recipes into IndexedDB the first time the app runs. */
+/**
+ * Syncs the bundled seed recipes into IndexedDB on every launch — not just
+ * the first one. A recipe present in seed-recipes.ts but missing locally
+ * gets added; one whose bundled `updatedAt` is newer than the stored copy
+ * gets its content refreshed (title/ingredients/steps/etc.) while keeping
+ * the device's own `favorite`/`lastCookedAt` state; one that's no longer
+ * in seed-recipes.ts at all gets removed, since every recipe here is
+ * shipped app content, not something the user authored themselves.
+ * Without this, a returning user's device would stay stuck on whatever
+ * recipes happened to exist the very first time they opened the app,
+ * forever — no refresh, cache clear, or redeploy would ever change that.
+ */
 export async function ensureSeeded(): Promise<void> {
-  const count = await db.recipes.count();
-  if (count === 0) {
-    await db.recipes.bulkAdd(seedRecipes);
+  const existing = await db.recipes.toArray();
+  const existingById = new Map(existing.map((r) => [r.id, r]));
+  const seedIds = new Set(seedRecipes.map((r) => r.id));
+
+  const toPut: Recipe[] = [];
+  for (const seedRecipe of seedRecipes) {
+    const current = existingById.get(seedRecipe.id);
+    if (!current) {
+      toPut.push(seedRecipe);
+    } else if (new Date(seedRecipe.updatedAt) > new Date(current.updatedAt)) {
+      toPut.push({
+        ...seedRecipe,
+        favorite: current.favorite,
+        lastCookedAt: current.lastCookedAt,
+      });
+    }
   }
+
+  const toDelete = existing.filter((r) => !seedIds.has(r.id)).map((r) => r.id);
+
+  if (toPut.length > 0) await db.recipes.bulkPut(toPut);
+  if (toDelete.length > 0) await db.recipes.bulkDelete(toDelete);
 }
 
 export async function getAllRecipes(): Promise<Recipe[]> {
