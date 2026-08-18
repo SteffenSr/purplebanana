@@ -686,6 +686,38 @@ button {
   max-width: 40rem;
 }
 
+.cook-mode__ingredients {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  max-width: 40rem;
+}
+
+.cook-mode__ingredient-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: var(--space-2) var(--space-3);
+}
+
+.cook-mode__ingredient-chip-amount {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .cook-mode__timer {
   font-size: var(--font-size-xl);
   font-weight: 800;

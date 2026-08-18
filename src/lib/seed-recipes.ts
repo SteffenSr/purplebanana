@@ -612,6 +612,7 @@ export const seedRecipes: Recipe[] = [
           da: "Bland planteyoghurt og tandoori-krydderi i en skål.",
           en: "Mix the plant yogurt and tandoori spice blend in a bowl.",
         },
+        ingredientRefs: ["3-4-cup-plant-yogurt", "1-tbsp-tandoori-spice-blend"],
       },
       {
         order: 2,
@@ -619,6 +620,7 @@ export const seedRecipes: Recipe[] = [
           da: "Vend Chicken Bites i marinaden, til de er godt dækket.",
           en: "Toss the Chicken Bites in the marinade until well coated.",
         },
+        ingredientRefs: ["2-packages-likemeat-chicken-bites-thawed"],
       },
       {
         order: 3,
@@ -634,6 +636,12 @@ export const seedRecipes: Recipe[] = [
           da: "Rist garam masala, koriander, spidskommen og gurkemeje kort i en stor gryde, til de dufter.",
           en: "Toast the garam masala, coriander, cumin, and turmeric briefly in a large pot until fragrant.",
         },
+        ingredientRefs: [
+          "1-tbsp-garam-masala",
+          "1-tsp-ground-coriander",
+          "1-tsp-ground-cumin",
+          "1-tsp-ground-turmeric",
+        ],
       },
       {
         order: 5,
@@ -642,6 +650,7 @@ export const seedRecipes: Recipe[] = [
           en: "Add the oil and onion to the pot with the spices, and cook until the onion is soft.",
         },
         timerMinutes: 5,
+        ingredientRefs: ["oil-for-frying", "1-large-onion-chopped"],
       },
       {
         order: 6,
@@ -649,6 +658,7 @@ export const seedRecipes: Recipe[] = [
           da: "Rør hvidløg og tomatpuré i, og steg et par minutter.",
           en: "Stir in the garlic and tomato paste and cook for a couple of minutes.",
         },
+        ingredientRefs: ["2-cloves-garlic-minced", "3-tbsp-tomato-paste"],
       },
       {
         order: 7,
@@ -663,6 +673,12 @@ export const seedRecipes: Recipe[] = [
           da: "Rør de hakkede tomater, chili, ingefær og bukkehornsbladene i.",
           en: "Stir in the chopped tomatoes, chili, ginger, and fenugreek leaves.",
         },
+        ingredientRefs: [
+          "400-g-canned-chopped-tomatoes",
+          "1-fresh-chili-chopped",
+          "2-cm-fresh-ginger-grated",
+          "1-tbsp-crushed-dried-fenugreek-leaves-kasuri-methi-find-them-at-an-asian-grocery-store",
+        ],
       },
       {
         order: 9,
@@ -677,6 +693,7 @@ export const seedRecipes: Recipe[] = [
           da: "Rør Naturli' Smørbar i, til det er smeltet.",
           en: "Stir in the Naturli' butter until melted.",
         },
+        ingredientRefs: ["3-tbsp-naturli-vegan-butter"],
       },
       {
         order: 11,
@@ -692,6 +709,7 @@ export const seedRecipes: Recipe[] = [
           da: "Rør plantefløden i, og smag til med salt, lige inden servering.",
           en: "Stir in the plant cream and season with salt just before serving.",
         },
+        ingredientRefs: ["3-4-cup-plant-based-cream", "salt-to-taste"],
       },
       {
         order: 13,

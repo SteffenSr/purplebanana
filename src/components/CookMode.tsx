@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRecipe } from "@/lib/hooks";
-import { markCooked, saveStepNote } from "@/lib/db";
+import { markCooked, saveStepNote, ingredientKey } from "@/lib/db";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { formatClock, useRecipeTimers } from "@/lib/use-timers";
 import { useLocale } from "@/lib/use-locale";
@@ -24,6 +24,13 @@ export function CookMode({ id }: { id: string }) {
   const isLastStep = stepIndex === steps.length - 1;
 
   const currentStepNote = currentStep ? recipe?.stepNotes?.[currentStep.order] : undefined;
+
+  const stepIngredients = useMemo(() => {
+    if (!recipe || !currentStep?.ingredientRefs) return [];
+    return currentStep.ingredientRefs
+      .map((key) => recipe.ingredients.find((ing) => ingredientKey(ing) === key))
+      .filter((ing): ing is NonNullable<typeof ing> => !!ing);
+  }, [recipe, currentStep]);
 
   const { timers, start: startTimer, dismiss: dismissTimer } = useRecipeTimers(id);
   const currentTimer = currentStep ? timers.find((t) => t.order === currentStep.order) : undefined;
@@ -110,6 +117,21 @@ export function CookMode({ id }: { id: string }) {
       <div className="cook-mode__body">
         <span className="cook-mode__step-label">{t.cookMode.step(currentStep.order)}</span>
         <p className="cook-mode__step-text">{currentStep.instruction[locale]}</p>
+
+        {stepIngredients.length > 0 && (
+          <ul className="cook-mode__ingredients">
+            {stepIngredients.map((ing) => {
+              const key = ingredientKey(ing);
+              const amount = recipe.ingredientNotes?.[key]?.amount;
+              return (
+                <li key={key} className="cook-mode__ingredient-chip">
+                  {ing.text[locale]}
+                  {amount && <span className="cook-mode__ingredient-chip-amount">{amount}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
 
         {currentStep.timerMinutes && !currentTimer && (
           <button

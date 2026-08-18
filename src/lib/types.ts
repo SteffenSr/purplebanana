@@ -19,6 +19,14 @@ export interface Step {
   instruction: LocalizedText;
   /** Optional timer length in minutes; rendered as a "start timer" affordance in cook mode. */
   timerMinutes?: number;
+  /**
+   * Ingredients added or used in this step, as stable keys from
+   * `ingredientKey()` in db.ts (not array index, for the same reordering-
+   * safety reason as `ingredientNotes`). Rendered as a compact chip list in
+   * cook mode so the cook can see quantities without leaving the step
+   * screen. Order in this array is the display order.
+   */
+  ingredientRefs?: string[];
 }
 
 export interface Recipe {
