@@ -131,6 +131,58 @@ that changes any asset gets a fresh cache namespace and evicts the old one
 added or removed, the whole two-pass build regenerates the list
 automatically — nothing to remember to update by hand.
 
+## Localization (Danish / English)
+
+The app is bilingual, Danish first. Two constraints already established
+above shape how: there's no server, and (per "Navigation uses plain `<a>`"
+below) every in-app link is a full page reload, not a client-side route
+change.
+
+**Why this isn't locale-prefixed routing (`/da/...`, `/en/...`).** That's
+the "proper" Next.js i18n answer, but it doesn't fit here: this app's
+routes are already fully enumerated at build time via
+`generateStaticParams` (see "Why static export + IndexedDB" above), so
+locale-prefixed routes would double every recipe/cook route, and switching
+language would need to rewrite the current URL to the other locale prefix
+on every navigation — real work for a static export with no server to do
+it centrally. It also doesn't match the UX this was built for: "I want to
+flip to a Danish recipe on a whim, without losing my place" reads far more
+naturally as an instant in-place toggle than as a navigation.
+
+**The mechanism** (`src/lib/locale.ts`, `use-locale.ts`,
+`translations.ts`) mirrors `src/lib/timers.ts` almost exactly, for the
+same reason: it's a module-level store, not React state, backed by
+`localStorage`, because a full page reload happens on every navigation and
+anything living only in memory wouldn't survive it.
+
+- **Detection** reads `navigator.languages`/`navigator.language` client-side
+  (there's no request to read an `Accept-Language` header from — this is
+  static HTML). The first candidate starting with `da` or `en` wins;
+  anything else (or no `navigator` at all, e.g. during the build's static
+  render) falls back to Danish, the app's primary language.
+- **Manual override** (`setLocale()`) always wins over detection once set,
+  persisted to `localStorage` under `kr:locale`. The `LanguageSwitcher` in
+  the header is a plain, always-visible DA/EN toggle rather than a
+  "fix wrong detection" affordance that only appears conditionally —
+  switching languages by choice (not just by correcting a guess) is a
+  first-class use case here.
+- **Avoiding a hydration flash**: the store exposes
+  `getServerLocaleSnapshot()` (always `"da"`, matching the prerendered
+  HTML and `<html lang="da">`) alongside the real client `getSnapshot()`,
+  and `useLocale()` reads both through `useSyncExternalStore` — the same
+  pattern `OnlineStatus.tsx` already uses for `navigator.onLine`. React's
+  hydration handling for that hook resolves server → real client value in
+  the same commit, before paint, rather than a visible post-mount flash
+  from a `useEffect`.
+- **Recipe content** (`src/lib/seed-recipes.ts`) stores every user-facing
+  field as `LocalizedText` (`{ da, en }`, see `types.ts`) rather than
+  duplicating whole recipe objects per language — one `Recipe` has both
+  languages in it, and components pick `field[locale]` at render time.
+  This is also why `db.ts`'s Dexie schema dropped `title` from its index
+  in schema version 2: an object can't be a simple sort/index key, so the
+  recipe list is sorted by `title[locale]` in the UI layer
+  (`src/app/page.tsx`) instead, where the current language is known.
+
 ## Navigation uses plain `<a>`, not `next/link`
 
 Every internal link in this app is a plain `<a href>`, not `next/link`'s

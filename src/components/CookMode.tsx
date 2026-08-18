@@ -5,9 +5,11 @@ import { useRecipe } from "@/lib/hooks";
 import { markCooked } from "@/lib/db";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { formatClock, useRecipeTimers } from "@/lib/use-timers";
+import { useLocale } from "@/lib/use-locale";
 
 export function CookMode({ id }: { id: string }) {
   const { state } = useRecipe(id);
+  const { locale, t } = useLocale();
   const [stepIndex, setStepIndex] = useState(0);
   const [finished, setFinished] = useState(false);
 
@@ -36,7 +38,7 @@ export function CookMode({ id }: { id: string }) {
     return (
       <div className="cook-mode">
         <div className="cook-mode__body">
-          <p className="text-muted">Loading recipe…</p>
+          <p className="text-muted">{t.cookMode.loading}</p>
         </div>
       </div>
     );
@@ -46,9 +48,9 @@ export function CookMode({ id }: { id: string }) {
     return (
       <div className="cook-mode">
         <div className="cook-mode__body">
-          <p className="empty-state">This recipe has no steps to cook.</p>
+          <p className="empty-state">{t.cookMode.noSteps}</p>
           <a href={`/recipes/${id}/`} className="btn btn-secondary">
-            ← Back
+            {t.cookMode.back}
           </a>
         </div>
       </div>
@@ -67,9 +69,9 @@ export function CookMode({ id }: { id: string }) {
             <span style={{ fontSize: "4rem" }} aria-hidden>
               {recipe.emoji}
             </span>
-            <h1>Enjoy your {recipe.title}!</h1>
+            <h1>{t.cookMode.enjoy(recipe.title[locale])}</h1>
             <a href={`/recipes/${id}/`} className="btn btn-primary">
-              Back to recipe
+              {t.cookMode.backToRecipe}
             </a>
           </div>
         </div>
@@ -83,7 +85,7 @@ export function CookMode({ id }: { id: string }) {
     <div className="cook-mode">
       <div className="cook-mode__top">
         {/* Plain <a>: see RecipeCard.tsx for why this app avoids next/link. */}
-        <a href={`/recipes/${id}/`} className="btn btn-icon" aria-label="Exit cook mode">
+        <a href={`/recipes/${id}/`} className="btn btn-icon" aria-label={t.cookMode.exitCookMode}>
           ✕
         </a>
         <div
@@ -101,8 +103,8 @@ export function CookMode({ id }: { id: string }) {
       </div>
 
       <div className="cook-mode__body">
-        <span className="cook-mode__step-label">Step {currentStep.order}</span>
-        <p className="cook-mode__step-text">{currentStep.instruction}</p>
+        <span className="cook-mode__step-label">{t.cookMode.step(currentStep.order)}</span>
+        <p className="cook-mode__step-text">{currentStep.instruction[locale]}</p>
 
         {currentStep.timerMinutes && !currentTimer && (
           <button
@@ -112,11 +114,11 @@ export function CookMode({ id }: { id: string }) {
               startTimer(
                 currentStep.order,
                 currentStep.timerMinutes!,
-                `Step ${currentStep.order}: ${currentStep.instruction}`,
+                `${t.cookMode.step(currentStep.order)}: ${currentStep.instruction[locale]}`,
               )
             }
           >
-            ⏲ Start {currentStep.timerMinutes} min timer
+            {t.cookMode.startTimer(currentStep.timerMinutes)}
           </button>
         )}
 
@@ -128,7 +130,7 @@ export function CookMode({ id }: { id: string }) {
               className="cook-mode__timer-cancel"
               onClick={() => dismissTimer(currentStep.order)}
             >
-              Cancel timer
+              {t.cookMode.cancelTimer}
             </button>
           </div>
         )}
@@ -139,25 +141,27 @@ export function CookMode({ id }: { id: string }) {
             className="cook-mode__timer cook-mode__timer--expired"
             onClick={() => dismissTimer(currentStep.order)}
           >
-            ⏰ Done — tap to dismiss
+            {t.cookMode.timerDone}
           </button>
         )}
 
         {otherTimers.length > 0 && (
           <div className="cook-mode__other-timers">
-            {otherTimers.map((t) => (
+            {otherTimers.map((timer) => (
               <button
-                key={t.order}
+                key={timer.order}
                 type="button"
                 className={
-                  "cook-mode__other-timer" + (t.expired ? " cook-mode__other-timer--expired" : "")
+                  "cook-mode__other-timer" + (timer.expired ? " cook-mode__other-timer--expired" : "")
                 }
                 onClick={() => {
-                  const target = steps.findIndex((s) => s.order === t.order);
+                  const target = steps.findIndex((s) => s.order === timer.order);
                   if (target !== -1) setStepIndex(target);
                 }}
               >
-                Step {t.order} · {t.expired ? "Done ⏰" : formatClock(t.secondsLeft)}
+                {timer.expired
+                  ? t.cookMode.otherStepDone(timer.order)
+                  : t.cookMode.otherStepClock(timer.order, formatClock(timer.secondsLeft))}
               </button>
             ))}
           </div>
@@ -171,7 +175,7 @@ export function CookMode({ id }: { id: string }) {
           disabled={stepIndex === 0}
           onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
         >
-          ← Back
+          {t.cookMode.back}
         </button>
         <button
           type="button"
@@ -185,7 +189,7 @@ export function CookMode({ id }: { id: string }) {
             }
           }}
         >
-          {isLastStep ? "Finish 🎉" : "Next →"}
+          {isLastStep ? t.cookMode.finish : t.cookMode.next}
         </button>
       </div>
     </div>
