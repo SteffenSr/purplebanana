@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { OnlineStatus } from "@/components/OnlineStatus";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { TimerAlarmBanner } from "@/components/TimerAlarmBanner";
 
 export const metadata: Metadata = {
   title: "Kitchen Recipes",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <ServiceWorkerRegister />
+        <TimerAlarmBanner />
         <header className="app-header">
           <div className="app-header__inner">
             {/* Plain <a>: see RecipeCard.tsx for why this app avoids next/link. */}

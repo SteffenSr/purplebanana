@@ -65,7 +65,8 @@ src/lib/
   db.ts                     Dexie schema + CRUD (ensureSeeded, getAllRecipes, ...)
   hooks.ts                  useRecipes / useRecipe — client-side data access
   use-wake-lock.ts          keeps the screen on during cook mode
-  use-countdown.ts          per-step timer
+  timers.ts                 persistent multi-step timer engine (localStorage + alarm)
+  use-timers.ts              React hooks over timers.ts (useRecipeTimers, useExpiredTimers)
 public/
   manifest.json, icon*.svg, sw.js   PWA + offline shell (sw.js is a template; see below)
 scripts/
