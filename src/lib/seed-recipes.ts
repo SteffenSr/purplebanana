@@ -45,6 +45,7 @@ export const seedRecipes: Recipe[] = [
         order: 2,
         instruction: { da: "Tilsæt pastaen, og kog den, til den er al dente.", en: "Add the pasta and cook until al dente." },
         timerMinutes: 10,
+        ingredientRefs: ["400-g-pasta-rigatoni-or-penne"],
       },
       {
         order: 3,
@@ -52,11 +53,13 @@ export const seedRecipes: Recipe[] = [
           da: "Imens varmes olivenolien i en stor pande ved middel varme.",
           en: "Meanwhile, heat the olive oil in a large pan over medium heat.",
         },
+        ingredientRefs: ["2-tbsp-olive-oil"],
       },
       {
         order: 4,
         instruction: { da: "Tilsæt løget, og steg det, til det er blødt.", en: "Add the onion and cook until soft." },
         timerMinutes: 5,
+        ingredientRefs: ["1-small-onion-finely-chopped"],
       },
       {
         order: 5,
@@ -64,6 +67,7 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt hvidløget, og steg det, til det dufter, ca. 30 sekunder.",
           en: "Add the garlic and cook until fragrant, about 30 seconds.",
         },
+        ingredientRefs: ["3-cloves-garlic-minced"],
       },
       {
         order: 6,
@@ -72,6 +76,7 @@ export const seedRecipes: Recipe[] = [
           en: "Pour in the crushed tomatoes, season with salt and pepper, and simmer.",
         },
         timerMinutes: 10,
+        ingredientRefs: ["700-g-crushed-tomatoes", "salt-and-pepper"],
       },
       {
         order: 7,
@@ -79,6 +84,7 @@ export const seedRecipes: Recipe[] = [
           da: "Rør kokosmælk og nutritional yeast i, til saucen er jævn.",
           en: "Stir in the coconut milk and nutritional yeast until the sauce is smooth.",
         },
+        ingredientRefs: ["150-ml-full-fat-coconut-milk", "3-tbsp-nutritional-yeast"],
       },
       {
         order: 8,
@@ -93,9 +99,10 @@ export const seedRecipes: Recipe[] = [
           da: "Top med frisk basilikum, og server med det samme.",
           en: "Top with fresh basil and serve immediately.",
         },
+        ingredientRefs: ["fresh-basil-torn"],
       },
     ],
-    updatedAt: "2026-08-18T14:24:26.000Z",
+    updatedAt: "2026-08-18T16:00:00.000Z",
   },
   {
     id: "morning-oat-porridge",
@@ -128,6 +135,7 @@ export const seedRecipes: Recipe[] = [
           da: "Kom havregryn, plantemælk og salt i en gryde ved middel varme.",
           en: "Combine the oats, plant milk, and salt in a saucepan over medium heat.",
         },
+        ingredientRefs: ["1-cup-rolled-oats", "2-cups-oat-milk-or-other-plant-milk-or-water", "pinch-of-salt"],
       },
       {
         order: 2,
@@ -143,6 +151,7 @@ export const seedRecipes: Recipe[] = [
           da: "Tag gryden af varmen, og rør ahornsirup i.",
           en: "Remove from heat and stir in the maple syrup.",
         },
+        ingredientRefs: ["1-tbsp-maple-syrup"],
       },
       {
         order: 4,
@@ -150,9 +159,10 @@ export const seedRecipes: Recipe[] = [
           da: "Fordel grøden i skåle, og tilføj din topping.",
           en: "Spoon into bowls and add your toppings.",
         },
+        ingredientRefs: ["toppings-banana-berries-nuts"],
       },
     ],
-    updatedAt: "2026-08-18T14:24:26.000Z",
+    updatedAt: "2026-08-18T16:00:00.000Z",
   },
   {
     id: "red-lentil-dal",
@@ -187,6 +197,7 @@ export const seedRecipes: Recipe[] = [
           da: "Skyl linserne i koldt vand, til vandet løber klart.",
           en: "Rinse the lentils in cold water until it runs clear.",
         },
+        ingredientRefs: ["1-cup-200-g-red-lentils-rinsed"],
       },
       {
         order: 2,
@@ -194,6 +205,7 @@ export const seedRecipes: Recipe[] = [
           da: "Varm kokosolien i en stor gryde ved middel varme.",
           en: "Heat the coconut oil in a large pot over medium heat.",
         },
+        ingredientRefs: ["1-tbsp-coconut-oil"],
       },
       {
         order: 3,
@@ -201,6 +213,7 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt spidskommenfrøene, og lad dem syde i 30 sekunder.",
           en: "Add the cumin seeds and let them sizzle for 30 seconds.",
         },
+        ingredientRefs: ["1-tsp-cumin-seeds"],
       },
       {
         order: 4,
@@ -209,6 +222,7 @@ export const seedRecipes: Recipe[] = [
           en: "Add the onion and cook until soft and golden.",
         },
         timerMinutes: 5,
+        ingredientRefs: ["1-onion-finely-chopped"],
       },
       {
         order: 5,
@@ -216,6 +230,7 @@ export const seedRecipes: Recipe[] = [
           da: "Rør hvidløg og ingefær i, og steg i 1 minut.",
           en: "Stir in the garlic and ginger and cook for 1 minute.",
         },
+        ingredientRefs: ["3-cloves-garlic-minced", "1-tbsp-fresh-ginger-grated"],
       },
       {
         order: 6,
@@ -223,14 +238,17 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt gurkemeje og koriander, og rør i 30 sekunder.",
           en: "Add the turmeric and coriander and stir for 30 seconds.",
         },
+        ingredientRefs: ["1-tsp-ground-turmeric", "1-tsp-ground-coriander"],
       },
       {
         order: 7,
         instruction: { da: "Tilsæt tomater og linser til gryden.", en: "Add the tomatoes and lentils to the pot." },
+        ingredientRefs: ["400-g-canned-chopped-tomatoes"],
       },
       {
         order: 8,
         instruction: { da: "Hæld vandet i, og bring det i kog.", en: "Pour in the water and bring to a boil." },
+        ingredientRefs: ["700-ml-water-or-vegetable-stock"],
       },
       {
         order: 9,
@@ -246,9 +264,10 @@ export const seedRecipes: Recipe[] = [
           da: "Smag til med salt, og server toppet med frisk koriander.",
           en: "Season with salt and serve topped with fresh cilantro.",
         },
+        ingredientRefs: ["salt-to-taste", "fresh-cilantro-chopped-to-serve"],
       },
     ],
-    updatedAt: "2026-08-18T14:24:26.000Z",
+    updatedAt: "2026-08-18T16:00:00.000Z",
   },
   {
     id: "yellow-split-pea-dal-ginger",
@@ -277,13 +296,18 @@ export const seedRecipes: Recipe[] = [
       { text: { da: "Saft af 1/2 citron", en: "Juice of 1/2 lemon" } },
     ],
     steps: [
-      { order: 1, instruction: { da: "Skyl de gule ærter i koldt vand.", en: "Rinse the split peas in cold water." } },
+      {
+        order: 1,
+        instruction: { da: "Skyl de gule ærter i koldt vand.", en: "Rinse the split peas in cold water." },
+        ingredientRefs: ["1-cup-200-g-yellow-split-peas-rinsed"],
+      },
       {
         order: 2,
         instruction: {
           da: "Varm kokosolien i en stor gryde ved middel varme.",
           en: "Heat the coconut oil in a large pot over medium heat.",
         },
+        ingredientRefs: ["1-tbsp-coconut-oil"],
       },
       {
         order: 3,
@@ -291,11 +315,13 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt sennepsfrø og spidskommenfrø, og steg, til de begynder at hoppe.",
           en: "Add the mustard seeds and cumin seeds and cook until they start to pop.",
         },
+        ingredientRefs: ["1-tsp-black-mustard-seeds", "1-tsp-cumin-seeds"],
       },
       {
         order: 4,
         instruction: { da: "Tilsæt løget, og steg det, til det er blødt.", en: "Add the onion and cook until soft." },
         timerMinutes: 5,
+        ingredientRefs: ["1-onion-finely-chopped"],
       },
       {
         order: 5,
@@ -303,6 +329,7 @@ export const seedRecipes: Recipe[] = [
           da: "Rør ingefær og hvidløg i, og steg i 1 minut.",
           en: "Stir in the ginger and garlic and cook for 1 minute.",
         },
+        ingredientRefs: ["2-tbsp-fresh-ginger-grated", "3-cloves-garlic-minced"],
       },
       {
         order: 6,
@@ -310,10 +337,12 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt gurkemeje og chilipulver, og rør kort.",
           en: "Add the turmeric and chili powder and stir briefly.",
         },
+        ingredientRefs: ["1-tsp-ground-turmeric", "1-2-tsp-chili-powder-optional"],
       },
       {
         order: 7,
         instruction: { da: "Tilsæt de gule ærter og vandet til gryden.", en: "Add the split peas and water to the pot." },
+        ingredientRefs: ["950-ml-water-or-vegetable-stock"],
       },
       {
         order: 8,
@@ -336,9 +365,10 @@ export const seedRecipes: Recipe[] = [
           da: "Smag til med salt, og rør citronsaften i inden servering.",
           en: "Season with salt and stir in the lemon juice before serving.",
         },
+        ingredientRefs: ["salt-to-taste", "juice-of-1-2-lemon"],
       },
     ],
-    updatedAt: "2026-08-18T14:24:26.000Z",
+    updatedAt: "2026-08-18T16:00:00.000Z",
   },
   {
     id: "coconut-spinach-dal",
@@ -373,6 +403,7 @@ export const seedRecipes: Recipe[] = [
           da: "Skyl linserne i koldt vand, til vandet løber klart.",
           en: "Rinse the lentils in cold water until it runs clear.",
         },
+        ingredientRefs: ["1-cup-200-g-red-lentils-rinsed"],
       },
       {
         order: 2,
@@ -380,6 +411,7 @@ export const seedRecipes: Recipe[] = [
           da: "Varm kokosolien i en stor gryde ved middel varme.",
           en: "Heat the coconut oil in a large pot over medium heat.",
         },
+        ingredientRefs: ["1-tbsp-coconut-oil"],
       },
       {
         order: 3,
@@ -387,11 +419,13 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt spidskommenfrøene, og lad dem syde i 30 sekunder.",
           en: "Add the cumin seeds and let them sizzle for 30 seconds.",
         },
+        ingredientRefs: ["1-tsp-cumin-seeds"],
       },
       {
         order: 4,
         instruction: { da: "Tilsæt løget, og steg det, til det er blødt.", en: "Add the onion and cook until soft." },
         timerMinutes: 5,
+        ingredientRefs: ["1-onion-finely-chopped"],
       },
       {
         order: 5,
@@ -399,6 +433,7 @@ export const seedRecipes: Recipe[] = [
           da: "Rør hvidløg og ingefær i, og steg i 1 minut.",
           en: "Stir in the garlic and ginger and cook for 1 minute.",
         },
+        ingredientRefs: ["3-cloves-garlic-minced", "1-tbsp-fresh-ginger-grated"],
       },
       {
         order: 6,
@@ -406,6 +441,7 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt gurkemeje og garam masala, og rør kort.",
           en: "Add the turmeric and garam masala and stir briefly.",
         },
+        ingredientRefs: ["1-tsp-ground-turmeric", "1-tsp-garam-masala"],
       },
       {
         order: 7,
@@ -413,6 +449,7 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt linser, kokosmælk og vand til gryden.",
           en: "Add the lentils, coconut milk, and water to the pot.",
         },
+        ingredientRefs: ["400-ml-canned-coconut-milk", "475-ml-water"],
       },
       {
         order: 8,
@@ -428,10 +465,15 @@ export const seedRecipes: Recipe[] = [
           da: "Rør spinaten i, og lad den simre med, til den er faldet sammen.",
           en: "Stir in the spinach and cook until wilted.",
         },
+        ingredientRefs: ["4-cups-120-g-fresh-spinach-roughly-chopped"],
       },
-      { order: 10, instruction: { da: "Smag til med salt, og server.", en: "Season with salt and serve." } },
+      {
+        order: 10,
+        instruction: { da: "Smag til med salt, og server.", en: "Season with salt and serve." },
+        ingredientRefs: ["salt-to-taste"],
+      },
     ],
-    updatedAt: "2026-08-18T14:24:26.000Z",
+    updatedAt: "2026-08-18T16:00:00.000Z",
   },
   {
     id: "palak-tofu",
@@ -474,6 +516,7 @@ export const seedRecipes: Recipe[] = [
           da: "Varm 1 spsk af olien i en stor pande ved middel varme.",
           en: "Heat 1 tbsp of the oil in a large pan over medium heat.",
         },
+        ingredientRefs: ["2-tbsp-neutral-oil-divided"],
       },
       {
         order: 2,
@@ -481,6 +524,7 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt spidskommenfrøene, og lad dem syde i 30 sekunder.",
           en: "Add the cumin seeds and let them sizzle for 30 seconds.",
         },
+        ingredientRefs: ["1-tsp-cumin-seeds"],
       },
       {
         order: 3,
@@ -488,6 +532,7 @@ export const seedRecipes: Recipe[] = [
           da: "Rør stødt koriander og gurkemeje i, og steg i 30 sekunder.",
           en: "Stir in the ground coriander and turmeric and cook for 30 seconds.",
         },
+        ingredientRefs: ["1-tsp-ground-coriander", "1-tsp-ground-turmeric"],
       },
       {
         order: 4,
@@ -496,6 +541,7 @@ export const seedRecipes: Recipe[] = [
           en: "Add the tofu and cook until golden on most sides, turning occasionally.",
         },
         timerMinutes: 8,
+        ingredientRefs: ["400-g-firm-tofu-cut-into-1-5-cm-cubes"],
       },
       {
         order: 5,
@@ -515,6 +561,7 @@ export const seedRecipes: Recipe[] = [
         order: 7,
         instruction: { da: "Tilsæt løget, og steg det, til det er blødt.", en: "Add the onion and cook until soft." },
         timerMinutes: 5,
+        ingredientRefs: ["1-onion-finely-chopped"],
       },
       {
         order: 8,
@@ -522,6 +569,7 @@ export const seedRecipes: Recipe[] = [
           da: "Rør hvidløget i, og steg i 1 minut.",
           en: "Stir in the garlic and cook for 1 minute.",
         },
+        ingredientRefs: ["3-cloves-garlic-minced"],
       },
       {
         order: 9,
@@ -529,6 +577,7 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt tomater og kokosmælk, og bring det i kog.",
           en: "Add the tomatoes and coconut milk and bring to a simmer.",
         },
+        ingredientRefs: ["400-g-canned-chopped-tomatoes", "400-ml-canned-coconut-milk"],
       },
       {
         order: 10,
@@ -544,6 +593,7 @@ export const seedRecipes: Recipe[] = [
           da: "Tilsæt spinaten lidt ad gangen, og rør, til den falder sammen.",
           en: "Add the spinach in batches, stirring until wilted.",
         },
+        ingredientRefs: ["800-g-fresh-spinach-or-frozen-thawed-and-squeezed-dry"],
       },
       {
         order: 12,
@@ -559,9 +609,10 @@ export const seedRecipes: Recipe[] = [
           da: "Rør ingefær, limesaft, salt og ahornsirup i, og server.",
           en: "Stir in the ginger, lime juice, salt, and maple syrup, then serve.",
         },
+        ingredientRefs: ["2-cm-fresh-ginger-grated", "juice-of-1-lime", "salt-to-taste", "1-2-tbsp-maple-syrup-or-agave-syrup"],
       },
     ],
-    updatedAt: "2026-08-18T14:30:00.000Z",
+    updatedAt: "2026-08-18T16:00:00.000Z",
   },
   {
     id: "murgh-makhani",
