@@ -35,9 +35,25 @@ export function RecipeCard({
         logic instead, which is what actually needs to work offline here.
       */}
       <a href={`/recipes/${recipe.id}/`} style={{ textDecoration: "none", color: "inherit" }}>
-        <span className="recipe-card__emoji" aria-hidden>
-          {recipe.emoji}
-        </span>
+        {recipe.imageUrl ? (
+          // Plain <img>, not next/image: images.unoptimized is set for the
+          // static export (no optimization API to call anyway), and photos
+          // are already resized/re-encoded before being committed — see
+          // AGENTS.md's "Adding or editing recipes" section.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            className="recipe-card__image"
+            src={recipe.imageUrl}
+            alt=""
+            loading="lazy"
+            width={400}
+            height={300}
+          />
+        ) : (
+          <span className="recipe-card__emoji" aria-hidden>
+            {recipe.emoji}
+          </span>
+        )}
         <div className="recipe-card__title">{recipe.title}</div>
         <p className="text-muted">{recipe.description}</p>
         <div className="recipe-card__meta">

@@ -71,6 +71,7 @@ src/lib/
   use-countdown.ts          per-step timer
 public/
   manifest.json, icon*.svg, sw.js   PWA + offline shell (sw.js is a template; see below)
+  images/recipes/<id>.jpg  optional recipe photos, referenced by Recipe.imageUrl
 scripts/
   generate-sw-precache.mjs  the actual "build" script — runs next build twice, see above
 vercel.json                pins Vercel's build command to `npm run build` (see above)
@@ -102,6 +103,18 @@ following the `Recipe` type in `src/lib/types.ts`:
   roasting, resting) so cook mode can offer a start-timer button.
 - Because routes are statically generated from this file, adding a recipe
   here requires a rebuild (`npm run build`) to get its own prerendered page.
+- **Photos are optional** (`Recipe.imageUrl`) — most recipes won't have one
+  and fall back to the emoji. When adding one: resize to a max dimension of
+  ~1200px and re-encode as JPEG (quality ~75-80) before committing — a
+  straight-off-a-phone photo is typically 3-15 MB, which is a lot to ship
+  in a static export that also precaches every image for offline use (see
+  `scripts/generate-sw-precache.mjs`); the `sharp` package used internally
+  by Next.js happens to already be in `node_modules` and works fine for a
+  one-off resize even though it isn't a declared project dependency. Save
+  the result to `public/images/recipes/<id>.jpg` and point `imageUrl` at
+  `/images/recipes/<id>.jpg`. Re-encoding through `sharp` (or similar)
+  also strips EXIF metadata by default, which matters for a phone photo
+  that may carry GPS coordinates — don't commit a photo with EXIF intact.
 
 ## Design rules (see docs/design-system.md for the full rationale)
 

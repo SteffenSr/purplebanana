@@ -21,8 +21,14 @@ Rules:
   the Dexie version number, never edit an existing version's schema in
   place — that breaks upgrades for anyone with existing local data. Add a
   new `.version()` block with an `.upgrade()` if data needs migrating.
-- `ensureSeeded()` only writes when the store is empty — don't make it
-  overwrite user-local state (`favorite`, `lastCookedAt`) on every load.
+- `ensureSeeded()` reconciles IndexedDB against `seed-recipes.ts` on
+  *every* launch, not just when the store is empty — it used to be
+  empty-store-only, which meant a returning user's device stayed stuck on
+  its first-ever recipe set forever, immune to any redeploy or cache
+  clear. Don't revert to that. It preserves each stored recipe's
+  `favorite`/`lastCookedAt` across a content update by only refreshing
+  fields when the bundled `updatedAt` is newer — see its doc comment in
+  `db.ts` for the exact merge rules before touching it.
 - Keep IndexedDB access behind `src/lib/hooks.ts` / `db.ts` — don't reach
   into `db.recipes` directly from components; that keeps SSR-safety (guard
   any browser-only API) and error handling in one place.
@@ -34,8 +40,9 @@ Rules:
   script**, not a step chained after `next build`. It runs `next build`
   *twice*: once (thrown away) to learn the real hashed chunk filenames,
   then it writes the full precache list (every recipe/cook route from
-  `seed-recipes.ts`, plus every hashed file under `_next/static`, with
-  `CACHE_VERSION` a hash of that list) into `public/sw.js` itself, builds
+  `seed-recipes.ts`, every recipe photo under `public/images/recipes/`,
+  plus every hashed file under `_next/static`, with `CACHE_VERSION` a hash
+  of that list) into `public/sw.js` itself, builds
   again for real, then restores `public/sw.js` to the committed template
   so a local build doesn't leave the working tree dirty. This exists
   because a single-pass "build, then patch `out/sw.js`" version shipped

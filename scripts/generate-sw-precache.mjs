@@ -27,7 +27,7 @@
 // bundled into JS/CSS, so the hashes are stable across the two passes.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync, statSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync, rmSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -41,13 +41,14 @@ function runNextBuild() {
   execFileSync("npx", ["next", "build"], { cwd: repoRoot, stdio: "inherit" });
 }
 
-function walkAssets(dir) {
+function walkFiles(dir, extPattern) {
   const files = [];
+  if (!existsSync(dir)) return files;
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      files.push(...walkAssets(full));
-    } else if (/\.(js|css)$/.test(entry.name)) {
+      files.push(...walkFiles(full, extPattern));
+    } else if (extPattern.test(entry.name)) {
       files.push(full);
     }
   }
@@ -56,7 +57,14 @@ function walkAssets(dir) {
 
 function computePrecacheUrls() {
   const staticDir = path.join(outDir, "_next", "static");
-  const chunkUrls = walkAssets(staticDir).map(
+  const chunkUrls = walkFiles(staticDir, /\.(js|css)$/).map(
+    (file) => "/" + path.relative(outDir, file).split(path.sep).join("/")
+  );
+
+  // Recipe photos (public/images/recipes/**) — precached like everything
+  // else so a recipe's photo shows up offline too, not just its text.
+  const imagesDir = path.join(outDir, "images");
+  const imageUrls = walkFiles(imagesDir, /\.(jpe?g|png|webp|gif|svg)$/i).map(
     (file) => "/" + path.relative(outDir, file).split(path.sep).join("/")
   );
 
@@ -73,6 +81,7 @@ function computePrecacheUrls() {
     "/icon.svg",
     "/icon-maskable.svg",
     ...recipeUrls,
+    ...imageUrls,
     ...chunkUrls,
   ];
 
@@ -82,7 +91,7 @@ function computePrecacheUrls() {
   // needlessly invalidate returning users' caches.
   const fingerprint = precacheUrls
     .map((url) => {
-      if (url.startsWith("/_next/")) {
+      if (url.startsWith("/_next/") || url.startsWith("/images/")) {
         const size = statSync(path.join(outDir, url.slice(1))).size;
         return `${url}:${size}`;
       }
@@ -91,7 +100,7 @@ function computePrecacheUrls() {
     .join("\n");
   const cacheVersion = createHash("sha256").update(fingerprint).digest("hex").slice(0, 10);
 
-  return { precacheUrls, cacheVersion, recipeUrls, chunkUrls };
+  return { precacheUrls, cacheVersion, recipeUrls, chunkUrls, imageUrls };
 }
 
 function writeSwContent(targetPath, template, { precacheUrls, cacheVersion }) {
@@ -120,8 +129,8 @@ try {
 
   console.log(
     `Precached ${result.precacheUrls.length} URLs ` +
-      `(${result.recipeUrls.length} recipe routes, ${result.chunkUrls.length} chunks) ` +
-      `[${result.cacheVersion}]`
+      `(${result.recipeUrls.length} recipe routes, ${result.imageUrls.length} images, ` +
+      `${result.chunkUrls.length} chunks) [${result.cacheVersion}]`
   );
 } finally {
   writeFileSync(publicSwPath, originalTemplate); // never leave the working tree dirty

@@ -16,6 +16,8 @@ export interface Recipe {
   title: string;
   description: string;
   emoji: string;
+  /** Optional photo, e.g. "/images/recipes/<id>.jpg". Falls back to `emoji` when unset. */
+  imageUrl?: string;
   tags: string[];
   servings: number;
   prepMinutes: number;

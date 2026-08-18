@@ -40,10 +40,18 @@ export function RecipeDetail({ id }: { id: string }) {
         ←
       </a>
 
+      {recipe.imageUrl && (
+        // Plain <img>: see RecipeCard.tsx for why this app skips next/image.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="recipe-hero-image" src={recipe.imageUrl} alt={recipe.title} />
+      )}
+
       <div className="recipe-hero">
-        <span className="recipe-hero__emoji" aria-hidden>
-          {recipe.emoji}
-        </span>
+        {!recipe.imageUrl && (
+          <span className="recipe-hero__emoji" aria-hidden>
+            {recipe.emoji}
+          </span>
+        )}
         <div>
           <h1>{recipe.title}</h1>
           <p className="text-muted">{recipe.description}</p>

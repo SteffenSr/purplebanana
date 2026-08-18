@@ -41,6 +41,17 @@ at very large type, on a screen someone is reading from across a kitchen:
 - `id` is a stable kebab-case slug; it's also the static-export route
   segment (`/recipes/<id>/`), so never change an existing recipe's `id`
   without checking whether anything else references it.
+- `imageUrl` is optional — most recipes won't have one and fall back to
+  the `emoji`. If a photo is provided (a raw phone photo is typically
+  3-15 MB), resize it to a max dimension of ~1200px, re-encode as JPEG at
+  quality ~75-80, and save it to `public/images/recipes/<id>.jpg` before
+  setting `imageUrl: "/images/recipes/<id>.jpg"` — this is a static export
+  that also precaches every image for offline use, so an un-resized photo
+  bloats both. `sharp` happens to already be present in `node_modules`
+  (a transitive dependency of Next.js, not declared here) and works fine
+  for this via a one-off Node script; re-encoding through it also strips
+  EXIF by default, which matters since a phone photo can carry GPS data —
+  never commit a recipe photo with EXIF metadata intact.
 - **Whenever you edit an existing recipe's content** (title, description,
   ingredients, steps, tags, etc.), bump its `updatedAt` to the current
   date. `ensureSeeded()` in `src/lib/db.ts` syncs this file into a
