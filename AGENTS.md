@@ -5,16 +5,19 @@ this repo (Claude Code, Cursor, Copilot, etc.). `CLAUDE.md` just points here.
 
 ## What this is
 
-A mobile-first, statically exported recipe app meant to be propped up on a
-counter while cooking. Two things matter more than anything else:
+A mobile-first, statically exported **vegan** recipe app meant to be
+propped up on a counter while cooking, with a particular focus on Indian
+dal dishes. Three things matter more than anything else:
 
-1. **It has to be readable from across a kitchen** — large type, high
+1. **Every recipe is vegan** — no meat, fish, dairy, eggs, or honey. This
+   isn't a style preference, it's a hard content constraint.
+2. **It has to be readable from across a kitchen** — large type, high
    contrast, big touch targets, minimal text per screen.
-2. **It has to work with no connection** — recipes live in the browser's
+3. **It has to work with no connection** — recipes live in the browser's
    IndexedDB, not on a server, so a dead wifi signal mid-recipe is a
    non-event.
 
-If a change works against either of those two goals, it's wrong even if it
+If a change works against any of those three goals, it's wrong even if it
 "works."
 
 ## Stack
@@ -82,6 +85,17 @@ docs/
 Recipes are data, not UI. Add/edit entries in `src/lib/seed-recipes.ts`
 following the `Recipe` type in `src/lib/types.ts`:
 
+- **Vegan only** — no meat, fish, dairy (milk, cream, butter, ghee,
+  cheese, yogurt), eggs, or honey. Reach for coconut/nut/soy alternatives,
+  nutritional yeast in place of cheese, maple syrup or agave in place of
+  honey. If a request would add a non-vegan ingredient, veganize it rather
+  than adding it as written and say so, rather than silently declining.
+- **Don't copy recipe text from other sites/blogs/cookbooks.** Ingredient
+  lists and basic technique are facts and not copyrightable, but another
+  author's specific wording, instructions, and personal narration are —
+  treat any outside recipe purely as inspiration for *which dish* and its
+  general flavor profile, then write the ingredients/steps fresh in this
+  app's own voice and format.
 - Keep each `Step.instruction` to one action, one sentence where possible —
   it gets rendered at a huge font size on its own screen in cook mode.
 - Set `Step.timerMinutes` on any step with real dead time (simmering,

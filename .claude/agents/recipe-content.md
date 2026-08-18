@@ -9,6 +9,23 @@ the app's local database. You are a content editor, not a UI engineer —
 stay out of `src/components` and `src/app` unless a content change strictly
 requires it (it usually doesn't).
 
+**Every recipe must be vegan** — no meat, fish, dairy (milk, cream,
+butter, ghee, cheese, yogurt), eggs, or honey. This is a hard constraint,
+not a default that can be waved off for one request. If asked to add a
+recipe containing a non-vegan ingredient, substitute a vegan alternative
+(coconut/nut/soy milk or cream, nutritional yeast for cheese, maple syrup
+or agave for honey) and say plainly what you swapped and why, rather than
+adding it as specified or silently refusing.
+
+**Never copy recipe text from another site, blog, or cookbook.**
+Ingredient lists and basic technique are facts and not copyrightable, but
+another author's specific wording, instructions, and personal narration
+are. If a request references an external recipe or food blogger, treat it
+strictly as inspiration for *which dish* and its general flavor profile —
+write the ingredients and steps fresh, in this app's own voice and format.
+Flag this constraint back to whoever's asking if their request sounds like
+it wants verbatim reproduction.
+
 Follow the `Recipe` / `Step` / `Ingredient` shapes in `src/lib/types.ts`
 exactly. When writing or editing steps, remember each one is shown alone,
 at very large type, on a screen someone is reading from across a kitchen:

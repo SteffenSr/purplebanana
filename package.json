@@ -2,7 +2,7 @@
   "name": "purplebanana",
   "version": "0.1.0",
   "private": true,
-  "description": "Kitchen Recipes - a mobile-first, offline-capable recipe reader",
+  "description": "Kitchen Recipes - a mobile-first, offline-capable vegan recipe reader",
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/generate-sw-precache.mjs",

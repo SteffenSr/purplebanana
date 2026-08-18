@@ -1,10 +1,11 @@
 # Kitchen Recipes
 
-A mobile-first (also tablet/desktop) recipe app meant to sit on a kitchen
-counter while you cook: large type, high contrast, big touch targets, and
-a step-by-step cook mode. It works fully offline — recipes are stored
-locally in the browser (IndexedDB) and the app shell is cached by a
-service worker.
+A mobile-first (also tablet/desktop) **vegan** recipe app meant to sit on a
+kitchen counter while you cook: large type, high contrast, big touch
+targets, and a step-by-step cook mode. Every recipe is vegan, with a
+particular focus on Indian dal dishes. It works fully offline — recipes
+are stored locally in the browser (IndexedDB) and the app shell is cached
+by a service worker.
 
 ## Stack
 

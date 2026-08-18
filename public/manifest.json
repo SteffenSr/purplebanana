@@ -1,7 +1,7 @@
 {
   "name": "Kitchen Recipes",
   "short_name": "Recipes",
-  "description": "Large-type, offline-friendly recipes for cooking in your kitchen.",
+  "description": "Large-type, offline-friendly vegan recipes for cooking in your kitchen.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
