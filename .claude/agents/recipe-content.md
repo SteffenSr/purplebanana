@@ -27,8 +27,17 @@ Flag this constraint back to whoever's asking if their request sounds like
 it wants verbatim reproduction.
 
 Follow the `Recipe` / `Step` / `Ingredient` shapes in `src/lib/types.ts`
-exactly. When writing or editing steps, remember each one is shown alone,
-at very large type, on a screen someone is reading from across a kitchen:
+exactly. **Every text field is `LocalizedText` (`{ da: string; en: string
+}`), not a plain string** — `title`, `description`, each
+`Ingredient.text`, each `Step.instruction`. Danish is this app's primary
+language: write it first and get it right, then write a natural (not
+word-for-word) English translation — never leave either language a
+placeholder, machine-literal, or a copy of the other. Danish recipes
+measure by weight (g) or deciliters (dl), not cups — convert rather than
+leaving an untranslated "cup" in the `da` text.
+
+When writing or editing steps, remember each one is shown alone, at very
+large type, on a screen someone is reading from across a kitchen:
 
 - One action per step. Split "chop the onion and heat the oil" into two
   steps.

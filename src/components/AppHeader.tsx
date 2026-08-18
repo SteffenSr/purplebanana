@@ -1,0 +1,32 @@
+"use client";
+
+import { useLocale } from "@/lib/use-locale";
+import { OnlineStatus } from "@/components/OnlineStatus";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+
+/**
+ * Client component so the brand name can follow the current language —
+ * the root layout itself stays a server component (it exports `Metadata`).
+ */
+export function AppHeader() {
+  const { t } = useLocale();
+
+  return (
+    <header className="app-header">
+      <div className="app-header__inner">
+        {/* Plain <a>: see RecipeCard.tsx for why this app avoids next/link. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a href="/" className="app-header__brand">
+          <span className="app-header__brand-mark" aria-hidden>
+            🌱
+          </span>
+          {t.appName}
+        </a>
+        <div className="app-header__controls">
+          <OnlineStatus />
+          <LanguageSwitcher />
+        </div>
+      </div>
+    </header>
+  );
+}

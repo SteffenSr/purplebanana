@@ -2,6 +2,7 @@
 
 import type { Recipe } from "@/lib/types";
 import { toggleFavorite } from "@/lib/db";
+import { useLocale } from "@/lib/use-locale";
 
 export function RecipeCard({
   recipe,
@@ -10,6 +11,7 @@ export function RecipeCard({
   recipe: Recipe;
   onFavoriteChange: () => void;
 }) {
+  const { locale, t } = useLocale();
   const totalMinutes = recipe.prepMinutes + recipe.cookMinutes;
 
   return (
@@ -17,7 +19,7 @@ export function RecipeCard({
       <button
         type="button"
         className="recipe-card__fav"
-        aria-label={recipe.favorite ? "Remove from favorites" : "Add to favorites"}
+        aria-label={recipe.favorite ? t.recipeCard.removeFavorite : t.recipeCard.addFavorite}
         aria-pressed={!!recipe.favorite}
         onClick={async (e) => {
           e.preventDefault();
@@ -38,11 +40,11 @@ export function RecipeCard({
         <span className="recipe-card__emoji" aria-hidden>
           {recipe.emoji}
         </span>
-        <div className="recipe-card__title">{recipe.title}</div>
-        <p className="text-muted">{recipe.description}</p>
+        <div className="recipe-card__title">{recipe.title[locale]}</div>
+        <p className="text-muted">{recipe.description[locale]}</p>
         <div className="recipe-card__meta">
-          <span>⏱ {totalMinutes} min</span>
-          <span>🍽 {recipe.servings} servings</span>
+          <span>{t.recipeCard.minutes(totalMinutes)}</span>
+          <span>{t.recipeCard.servings(recipe.servings)}</span>
         </div>
       </a>
     </div>

@@ -15,6 +15,13 @@ class RecipeDatabase extends Dexie {
     this.version(1).stores({
       recipes: "id, title, *tags, updatedAt",
     });
+    // v2: title became a { da, en } object (see LocalizedText in types.ts),
+    // so it can no longer be a Dexie index — display order is now sorted by
+    // localized title in the UI layer instead (src/app/page.tsx), where the
+    // current language is known.
+    this.version(2).stores({
+      recipes: "id, *tags, updatedAt",
+    });
   }
 }
 
@@ -58,7 +65,7 @@ export async function ensureSeeded(): Promise<void> {
 }
 
 export async function getAllRecipes(): Promise<Recipe[]> {
-  return db.recipes.orderBy("title").toArray();
+  return db.recipes.toArray();
 }
 
 export async function getRecipe(id: string): Promise<Recipe | undefined> {

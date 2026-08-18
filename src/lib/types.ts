@@ -1,11 +1,22 @@
+/**
+ * Any user-facing recipe text, in every language the app supports. Danish
+ * is the app's primary language, English the second — see
+ * docs/architecture.md's "Localization" section for why content is stored
+ * this way instead of via locale-prefixed routes.
+ */
+export interface LocalizedText {
+  da: string;
+  en: string;
+}
+
 export interface Ingredient {
-  text: string;
+  text: LocalizedText;
 }
 
 export interface Step {
   /** 1-based order shown to the cook. */
   order: number;
-  instruction: string;
+  instruction: LocalizedText;
   /** Optional timer length in minutes; rendered as a "start timer" affordance in cook mode. */
   timerMinutes?: number;
 }
@@ -13,8 +24,8 @@ export interface Step {
 export interface Recipe {
   /** Stable slug, also used as the IndexedDB primary key. */
   id: string;
-  title: string;
-  description: string;
+  title: LocalizedText;
+  description: LocalizedText;
   emoji: string;
   tags: string[];
   servings: number;
