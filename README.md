@@ -5,7 +5,8 @@ kitchen counter while you cook: large type, high contrast, big touch
 targets, and a step-by-step cook mode. Every recipe is vegan, with a
 particular focus on Indian dal dishes. It works fully offline — recipes
 are stored locally in the browser (IndexedDB) and the app shell is cached
-by a service worker.
+by a service worker. The app is bilingual — Danish (primary) and English —
+detected from the browser and switchable anytime from the header.
 
 ## Stack
 

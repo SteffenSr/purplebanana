@@ -7,7 +7,7 @@ this repo (Claude Code, Cursor, Copilot, etc.). `CLAUDE.md` just points here.
 
 A mobile-first, statically exported **vegan** recipe app meant to be
 propped up on a counter while cooking, with a particular focus on Indian
-dal dishes. Three things matter more than anything else:
+dal dishes. Four things matter more than anything else:
 
 1. **Every recipe is vegan** — no meat, fish, dairy, eggs, or honey. This
    isn't a style preference, it's a hard content constraint.
@@ -16,8 +16,12 @@ dal dishes. Three things matter more than anything else:
 3. **It has to work with no connection** — recipes live in the browser's
    IndexedDB, not on a server, so a dead wifi signal mid-recipe is a
    non-event.
+4. **It's bilingual, Danish first** — every user-facing string (UI chrome
+   and recipe content alike) exists in both Danish and English. Danish is
+   the primary language and the fallback whenever detection can't tell;
+   see "Localization" below before adding any new user-facing text.
 
-If a change works against any of those three goals, it's wrong even if it
+If a change works against any of those four goals, it's wrong even if it
 "works."
 
 ## Stack
@@ -68,7 +72,13 @@ src/lib/
   db.ts                     Dexie schema + CRUD (ensureSeeded, getAllRecipes, ...)
   hooks.ts                  useRecipes / useRecipe — client-side data access
   use-wake-lock.ts          keeps the screen on during cook mode
-  use-countdown.ts          per-step timer
+  timers.ts                 persistent multi-step timer engine (localStorage + alarm)
+  use-timers.ts              React hooks over timers.ts (useRecipeTimers, useExpiredTimers)
+  locale.ts                  language store: browser detection + manual override (localStorage)
+  translations.ts            UI string dictionary, da and en
+  use-locale.ts               useLocale() hook: { locale, t, setLocale }
+src/components/
+  AppHeader.tsx, LanguageSwitcher.tsx   header brand + DA/EN toggle
 public/
   manifest.json, icon*.svg, sw.js   PWA + offline shell (sw.js is a template; see below)
   images/recipes/<id>.jpg  optional recipe photos, referenced by Recipe.imageUrl
@@ -80,6 +90,26 @@ docs/
   design-system.md           the type/color/spacing tokens and the reasoning behind them
 .claude/agents/            specialized subagents for this repo's recurring work types
 ```
+
+## Localization (Danish / English)
+
+Every user-facing string — UI chrome and recipe content alike — exists in
+both languages via a `LocalizedText` (`{ da: string; en: string }`, see
+`src/lib/types.ts`). Danish is primary: it's the fallback whenever browser
+detection is inconclusive, and what the static prerendered HTML ships
+with. See docs/architecture.md's "Localization" section for the full
+mechanism (detection, manual override, why it's client-side state and not
+locale-prefixed routes).
+
+- **UI strings** live in `src/lib/translations.ts`. Add a new key to
+  *both* the `da` and `en` dictionaries — the `Dictionary` type will catch
+  a missing one at compile time. Read them via `useLocale()`'s `t`.
+- **Recipe content** (`title`, `description`, `Ingredient.text`,
+  `Step.instruction`) is `LocalizedText`, not a plain string — see
+  "Adding or editing recipes" below.
+- Never hardcode an English (or Danish) string directly in a component;
+  route it through `translations.ts` even if it currently only appears in
+  one place.
 
 ## Adding or editing recipes
 
@@ -97,10 +127,20 @@ following the `Recipe` type in `src/lib/types.ts`:
   treat any outside recipe purely as inspiration for *which dish* and its
   general flavor profile, then write the ingredients/steps fresh in this
   app's own voice and format.
-- Keep each `Step.instruction` to one action, one sentence where possible —
-  it gets rendered at a huge font size on its own screen in cook mode.
+- **Every text field is `{ da: string; en: string }`**, not a plain
+  string — `title`, `description`, each `Ingredient.text`, each
+  `Step.instruction`. Write both; Danish is the primary language, so get
+  it right first, then give the English an equally natural (not
+  word-for-word) translation. Never leave one language a placeholder or a
+  copy-paste of the other.
+- Keep each `Step.instruction` to one action, one sentence where possible,
+  in both languages — it gets rendered at a huge font size on its own
+  screen in cook mode.
 - Set `Step.timerMinutes` on any step with real dead time (simmering,
   roasting, resting) so cook mode can offer a start-timer button.
+- Danish recipes conventionally measure by weight (g) or volume in
+  deciliters (dl), not cups — convert rather than leaving `cup`
+  untranslated in the `da` text.
 - Because routes are statically generated from this file, adding a recipe
   here requires a rebuild (`npm run build`) to get its own prerendered page.
 - **Photos are optional** (`Recipe.imageUrl`) — most recipes won't have one

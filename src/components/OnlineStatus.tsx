@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useLocale } from "@/lib/use-locale";
 
 function subscribe(callback: () => void) {
   window.addEventListener("online", callback);
@@ -13,6 +14,7 @@ function subscribe(callback: () => void) {
 
 /** Reassures the cook that the app still works without a connection. */
 export function OnlineStatus() {
+  const { t } = useLocale();
   const online = useSyncExternalStore(
     subscribe,
     () => navigator.onLine,
@@ -22,7 +24,7 @@ export function OnlineStatus() {
   return (
     <span className={`status-pill ${online ? "" : "status-pill--offline"}`}>
       <span className="status-pill__dot" aria-hidden />
-      {online ? "Online" : "Offline mode"}
+      {online ? t.online : t.offline}
     </span>
   );
 }

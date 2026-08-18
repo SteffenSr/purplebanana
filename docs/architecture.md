@@ -131,6 +131,58 @@ that changes any asset gets a fresh cache namespace and evicts the old one
 added or removed, the whole two-pass build regenerates the list
 automatically — nothing to remember to update by hand.
 
+## Localization (Danish / English)
+
+The app is bilingual, Danish first. Two constraints already established
+above shape how: there's no server, and (per "Navigation uses plain `<a>`"
+below) every in-app link is a full page reload, not a client-side route
+change.
+
+**Why this isn't locale-prefixed routing (`/da/...`, `/en/...`).** That's
+the "proper" Next.js i18n answer, but it doesn't fit here: this app's
+routes are already fully enumerated at build time via
+`generateStaticParams` (see "Why static export + IndexedDB" above), so
+locale-prefixed routes would double every recipe/cook route, and switching
+language would need to rewrite the current URL to the other locale prefix
+on every navigation — real work for a static export with no server to do
+it centrally. It also doesn't match the UX this was built for: "I want to
+flip to a Danish recipe on a whim, without losing my place" reads far more
+naturally as an instant in-place toggle than as a navigation.
+
+**The mechanism** (`src/lib/locale.ts`, `use-locale.ts`,
+`translations.ts`) mirrors `src/lib/timers.ts` almost exactly, for the
+same reason: it's a module-level store, not React state, backed by
+`localStorage`, because a full page reload happens on every navigation and
+anything living only in memory wouldn't survive it.
+
+- **Detection** reads `navigator.languages`/`navigator.language` client-side
+  (there's no request to read an `Accept-Language` header from — this is
+  static HTML). The first candidate starting with `da` or `en` wins;
+  anything else (or no `navigator` at all, e.g. during the build's static
+  render) falls back to Danish, the app's primary language.
+- **Manual override** (`setLocale()`) always wins over detection once set,
+  persisted to `localStorage` under `kr:locale`. The `LanguageSwitcher` in
+  the header is a plain, always-visible DA/EN toggle rather than a
+  "fix wrong detection" affordance that only appears conditionally —
+  switching languages by choice (not just by correcting a guess) is a
+  first-class use case here.
+- **Avoiding a hydration flash**: the store exposes
+  `getServerLocaleSnapshot()` (always `"da"`, matching the prerendered
+  HTML and `<html lang="da">`) alongside the real client `getSnapshot()`,
+  and `useLocale()` reads both through `useSyncExternalStore` — the same
+  pattern `OnlineStatus.tsx` already uses for `navigator.onLine`. React's
+  hydration handling for that hook resolves server → real client value in
+  the same commit, before paint, rather than a visible post-mount flash
+  from a `useEffect`.
+- **Recipe content** (`src/lib/seed-recipes.ts`) stores every user-facing
+  field as `LocalizedText` (`{ da, en }`, see `types.ts`) rather than
+  duplicating whole recipe objects per language — one `Recipe` has both
+  languages in it, and components pick `field[locale]` at render time.
+  This is also why `db.ts`'s Dexie schema dropped `title` from its index
+  in schema version 2: an object can't be a simple sort/index key, so the
+  recipe list is sorted by `title[locale]` in the UI layer
+  (`src/app/page.tsx`) instead, where the current language is known.
+
 ## Navigation uses plain `<a>`, not `next/link`
 
 Every internal link in this app is a plain `<a href>`, not `next/link`'s
@@ -154,8 +206,60 @@ back/next flow so it works with wet or floury hands. It also:
 
 - requests a **Wake Lock** (`src/lib/use-wake-lock.ts`) so the screen
   doesn't dim mid-instruction — best-effort, no-ops on unsupported browsers;
-- offers an optional per-step **countdown timer**
-  (`src/lib/use-countdown.ts`) for steps with real dead time
-  (`Step.timerMinutes`);
+- offers an optional per-step **countdown timer** for steps with real dead
+  time (`Step.timerMinutes`);
 - calls `markCooked()` on finishing, which is the one place the app writes
   a timestamp back to IndexedDB from the cooking flow itself.
+
+## Persistent step timers
+
+A recipe step's timer has to survive the cook *leaving* that step: start a
+9-minute boil on step 2, flip to step 4 to prep something else, and the
+timer needs to still be counting down — correctly — when you flip back, and
+it has to sound an alarm the moment it hits zero no matter which step (or
+page) is on screen at that instant. A `useState` countdown tied to the
+current step can't do that; it resets the moment the step changes.
+
+`src/lib/timers.ts` is a module-level store, not React state, keyed by
+`recipeId:stepOrder`. Two decisions fall directly out of the "no server,
+IndexedDB-only, full-page-reload navigation" constraints already documented
+above:
+
+- **Timers track a wall-clock `endAt`, not a decrementing counter.** A
+  `setInterval` that ticks a counter down loses time the instant its tab is
+  backgrounded (browsers throttle/suspend timers) or the JS realm is torn
+  down entirely — which happens on *every* navigation in this app, because
+  internal links are plain `<a>` full-page loads, not client-side
+  transitions (see above). Storing `endAt = Date.now() + minutes * 60_000`
+  instead means "how much time is left" is always `endAt - Date.now()`,
+  correct regardless of how long the tick loop was paused or how many
+  reloads happened in between.
+- **State is persisted to `localStorage`, not IndexedDB.** Timers are
+  ephemeral session state (they don't need Dexie's schema/versioning, and
+  writing to it synchronously on every tick would be needless overhead),
+  but they do need to survive the hard reload that happens when a cook
+  exits and re-enters cook mode, or when the browser reclaims a backgrounded
+  tab. `localStorage` is synchronous and available before hydration, so a
+  freshly loaded page can recompute every timer's remaining time on its
+  very first render.
+
+The engine self-starts on import (any page that pulls in `timers.ts`
+resumes ticking from whatever's in `localStorage`) and fires the alarm
+(a Web Audio beep, `navigator.vibrate`, and a `Notification` if permission
+was granted) exactly once per timer, from the store itself — not from a
+React effect — so it fires once regardless of how many components have a
+timer hook mounted. `src/components/TimerAlarmBanner.tsx` is mounted once
+in the root layout specifically so the "timer's done" banner (and the
+sound/vibration/notification that come with it) shows up **wherever the
+cook currently is** — a different step in cook mode, the recipe detail
+page, even the recipe list — not just the step that started the timer.
+`document.visibilitychange` triggers an immediate catch-up tick so
+returning to a backgrounded tab fires a just-missed alarm right away
+instead of waiting for the next tick.
+
+This has one honest limit, inherent to a server-less static export: it only
+works while the tab/app's JS is actually running. If the browser fully
+closes or kills the tab, nothing can wake it to fire an alarm — there's no
+push server to do that from. `endAt` being wall-clock-based means the timer
+is never *wrong* when the page comes back (no server), just possibly
+*late* if the tab was gone for a while.
