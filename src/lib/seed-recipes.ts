@@ -563,4 +563,144 @@ export const seedRecipes: Recipe[] = [
     ],
     updatedAt: "2026-08-18T14:30:00.000Z",
   },
+  {
+    id: "murgh-makhani",
+    title: { da: "Murgh makhani (vegansk butter chicken)", en: "Murgh Makhani (Vegan Butter Chicken)" },
+    description: {
+      da: "Nok den mest populære indiske ret uden for Indien, gjort helt planebaseret — mild, cremet og perfekt som første indiske ret for nybegyndere.",
+      en: "Probably the most popular Indian dish outside India, made fully plant-based — mild, creamy, and a great first Indian recipe for beginners.",
+    },
+    emoji: "🍲",
+    tags: ["dinner", "vegan", "indian", "curry"],
+    servings: 4,
+    prepMinutes: 20,
+    cookMinutes: 50,
+    ingredients: [
+      {
+        text: {
+          da: "2 pakker LikeMeat Chicken Bites, optøede",
+          en: "2 packages LikeMeat Chicken Bites, thawed",
+        },
+      },
+      { text: { da: "2 dl planteyoghurt", en: "3/4 cup plant yogurt" } },
+      { text: { da: "1 spsk tandoori-krydderi", en: "1 tbsp tandoori spice blend" } },
+      { text: { da: "1 spsk garam masala", en: "1 tbsp garam masala" } },
+      { text: { da: "1 tsk stødt koriander", en: "1 tsp ground coriander" } },
+      { text: { da: "1 tsk stødt spidskommen", en: "1 tsp ground cumin" } },
+      { text: { da: "1 tsk stødt gurkemeje", en: "1 tsp ground turmeric" } },
+      { text: { da: "Olie til stegning", en: "Oil, for frying" } },
+      { text: { da: "1 stort løg, hakket", en: "1 large onion, chopped" } },
+      { text: { da: "2 fed hvidløg, hakkede", en: "2 cloves garlic, minced" } },
+      { text: { da: "3 spsk tomatpuré", en: "3 tbsp tomato paste" } },
+      { text: { da: "400 g hakkede tomater på dåse", en: "400 g canned chopped tomatoes" } },
+      { text: { da: "1 frisk chili, hakket", en: "1 fresh chili, chopped" } },
+      { text: { da: "2 cm frisk ingefær, revet", en: "2 cm fresh ginger, grated" } },
+      {
+        text: {
+          da: "1 spsk knuste bukkehornsblade (kasuri methi) — findes i asiatiske supermarkeder",
+          en: "1 tbsp crushed dried fenugreek leaves (kasuri methi) — find them at an Asian grocery store",
+        },
+      },
+      { text: { da: "3 spsk Naturli' Smørbar", en: "3 tbsp Naturli' vegan butter" } },
+      { text: { da: "2 dl plantefløde", en: "3/4 cup plant-based cream" } },
+      { text: { da: "Salt, efter smag", en: "Salt, to taste" } },
+    ],
+    steps: [
+      {
+        order: 1,
+        instruction: {
+          da: "Bland planteyoghurt og tandoori-krydderi i en skål.",
+          en: "Mix the plant yogurt and tandoori spice blend in a bowl.",
+        },
+      },
+      {
+        order: 2,
+        instruction: {
+          da: "Vend Chicken Bites i marinaden, til de er godt dækket.",
+          en: "Toss the Chicken Bites in the marinade until well coated.",
+        },
+      },
+      {
+        order: 3,
+        instruction: {
+          da: "Dæk skålen til, og sæt den i køleskabet for at marinere i mindst 1 time — helst natten over.",
+          en: "Cover the bowl and refrigerate to marinate for at least 1 hour — ideally overnight.",
+        },
+        timerMinutes: 60,
+      },
+      {
+        order: 4,
+        instruction: {
+          da: "Rist garam masala, koriander, spidskommen og gurkemeje kort i en stor gryde, til de dufter.",
+          en: "Toast the garam masala, coriander, cumin, and turmeric briefly in a large pot until fragrant.",
+        },
+      },
+      {
+        order: 5,
+        instruction: {
+          da: "Tilsæt olie og løget til gryden med krydderierne, og steg, til løget er blødt.",
+          en: "Add the oil and onion to the pot with the spices, and cook until the onion is soft.",
+        },
+        timerMinutes: 5,
+      },
+      {
+        order: 6,
+        instruction: {
+          da: "Rør hvidløg og tomatpuré i, og steg et par minutter.",
+          en: "Stir in the garlic and tomato paste and cook for a couple of minutes.",
+        },
+      },
+      {
+        order: 7,
+        instruction: {
+          da: "Tilsæt de marinerede Chicken Bites sammen med al marinaden.",
+          en: "Add the marinated Chicken Bites along with all the marinade.",
+        },
+      },
+      {
+        order: 8,
+        instruction: {
+          da: "Rør de hakkede tomater, chili, ingefær og bukkehornsbladene i.",
+          en: "Stir in the chopped tomatoes, chili, ginger, and fenugreek leaves.",
+        },
+      },
+      {
+        order: 9,
+        instruction: {
+          da: "Bring det i kog, og skru derefter ned for varmen.",
+          en: "Bring to a boil, then reduce the heat.",
+        },
+      },
+      {
+        order: 10,
+        instruction: {
+          da: "Rør Naturli' Smørbar i, til det er smeltet.",
+          en: "Stir in the Naturli' butter until melted.",
+        },
+      },
+      {
+        order: 11,
+        instruction: {
+          da: "Lad retten simre ved svag varme i en halv times tid.",
+          en: "Let the dish simmer over low heat for about half an hour.",
+        },
+        timerMinutes: 30,
+      },
+      {
+        order: 12,
+        instruction: {
+          da: "Rør plantefløden i, og smag til med salt, lige inden servering.",
+          en: "Stir in the plant cream and season with salt just before serving.",
+        },
+      },
+      {
+        order: 13,
+        instruction: {
+          da: "Server med ris, naan og chutney.",
+          en: "Serve with rice, naan, and chutney.",
+        },
+      },
+    ],
+    updatedAt: "2026-08-18T15:10:00.000Z",
+  },
 ];
