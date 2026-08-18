@@ -145,6 +145,51 @@ button {
 }
 
 /* ---------------------------------------------------------------------
+   Timer alarm banner — a step timer finished, shown site-wide regardless
+   of which page or cook-mode step is on screen
+   --------------------------------------------------------------------- */
+.timer-alarm {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-danger);
+  color: var(--color-primary-contrast);
+  animation: timer-alarm-pulse 1s ease-in-out infinite;
+}
+
+.timer-alarm__icon {
+  font-size: var(--font-size-xl);
+}
+
+.timer-alarm__text {
+  flex: 1;
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+}
+
+.timer-alarm__dismiss {
+  background: var(--color-primary-contrast);
+  color: var(--color-danger);
+  flex: none;
+}
+
+@keyframes timer-alarm-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+/* ---------------------------------------------------------------------
    Status pill (online / offline)
    --------------------------------------------------------------------- */
 .status-pill {
@@ -447,6 +492,51 @@ button {
   color: var(--color-accent-contrast);
   border-radius: var(--radius-lg);
   padding: var(--space-3) var(--space-5);
+  min-height: var(--tap-min);
+}
+
+.cook-mode__timer-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cook-mode__timer--expired {
+  background: var(--color-danger);
+  color: var(--color-primary-contrast);
+  animation: timer-alarm-pulse 1s ease-in-out infinite;
+}
+
+.cook-mode__timer-cancel {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  min-height: var(--tap-min);
+  padding: 0 var(--space-2);
+}
+
+.cook-mode__other-timers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.cook-mode__other-timer {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: var(--space-2) var(--space-3);
+  min-height: var(--tap-min);
+}
+
+.cook-mode__other-timer--expired {
+  background: var(--color-danger);
+  color: var(--color-primary-contrast);
+  border-color: var(--color-danger);
 }
 
 .cook-mode__nav {

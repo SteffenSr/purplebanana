@@ -154,8 +154,60 @@ back/next flow so it works with wet or floury hands. It also:
 
 - requests a **Wake Lock** (`src/lib/use-wake-lock.ts`) so the screen
   doesn't dim mid-instruction — best-effort, no-ops on unsupported browsers;
-- offers an optional per-step **countdown timer**
-  (`src/lib/use-countdown.ts`) for steps with real dead time
-  (`Step.timerMinutes`);
+- offers an optional per-step **countdown timer** for steps with real dead
+  time (`Step.timerMinutes`);
 - calls `markCooked()` on finishing, which is the one place the app writes
   a timestamp back to IndexedDB from the cooking flow itself.
+
+## Persistent step timers
+
+A recipe step's timer has to survive the cook *leaving* that step: start a
+9-minute boil on step 2, flip to step 4 to prep something else, and the
+timer needs to still be counting down — correctly — when you flip back, and
+it has to sound an alarm the moment it hits zero no matter which step (or
+page) is on screen at that instant. A `useState` countdown tied to the
+current step can't do that; it resets the moment the step changes.
+
+`src/lib/timers.ts` is a module-level store, not React state, keyed by
+`recipeId:stepOrder`. Two decisions fall directly out of the "no server,
+IndexedDB-only, full-page-reload navigation" constraints already documented
+above:
+
+- **Timers track a wall-clock `endAt`, not a decrementing counter.** A
+  `setInterval` that ticks a counter down loses time the instant its tab is
+  backgrounded (browsers throttle/suspend timers) or the JS realm is torn
+  down entirely — which happens on *every* navigation in this app, because
+  internal links are plain `<a>` full-page loads, not client-side
+  transitions (see above). Storing `endAt = Date.now() + minutes * 60_000`
+  instead means "how much time is left" is always `endAt - Date.now()`,
+  correct regardless of how long the tick loop was paused or how many
+  reloads happened in between.
+- **State is persisted to `localStorage`, not IndexedDB.** Timers are
+  ephemeral session state (they don't need Dexie's schema/versioning, and
+  writing to it synchronously on every tick would be needless overhead),
+  but they do need to survive the hard reload that happens when a cook
+  exits and re-enters cook mode, or when the browser reclaims a backgrounded
+  tab. `localStorage` is synchronous and available before hydration, so a
+  freshly loaded page can recompute every timer's remaining time on its
+  very first render.
+
+The engine self-starts on import (any page that pulls in `timers.ts`
+resumes ticking from whatever's in `localStorage`) and fires the alarm
+(a Web Audio beep, `navigator.vibrate`, and a `Notification` if permission
+was granted) exactly once per timer, from the store itself — not from a
+React effect — so it fires once regardless of how many components have a
+timer hook mounted. `src/components/TimerAlarmBanner.tsx` is mounted once
+in the root layout specifically so the "timer's done" banner (and the
+sound/vibration/notification that come with it) shows up **wherever the
+cook currently is** — a different step in cook mode, the recipe detail
+page, even the recipe list — not just the step that started the timer.
+`document.visibilitychange` triggers an immediate catch-up tick so
+returning to a backgrounded tab fires a just-missed alarm right away
+instead of waiting for the next tick.
+
+This has one honest limit, inherent to a server-less static export: it only
+works while the tab/app's JS is actually running. If the browser fully
+closes or kills the tab, nothing can wake it to fire an alarm — there's no
+push server to do that from. `endAt` being wall-clock-based means the timer
+is never *wrong* when the page comes back (no server), just possibly
+*late* if the tab was gone for a while.

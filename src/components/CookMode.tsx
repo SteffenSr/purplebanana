@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRecipe } from "@/lib/hooks";
 import { markCooked } from "@/lib/db";
 import { useWakeLock } from "@/lib/use-wake-lock";
-import { useCountdown } from "@/lib/use-countdown";
+import { formatClock, useRecipeTimers } from "@/lib/use-timers";
 
 export function CookMode({ id }: { id: string }) {
   const { state } = useRecipe(id);
@@ -19,7 +19,9 @@ export function CookMode({ id }: { id: string }) {
   const currentStep = steps[stepIndex];
   const isLastStep = stepIndex === steps.length - 1;
 
-  const timer = useCountdown(currentStep?.timerMinutes, currentStep?.order);
+  const { timers, start: startTimer, dismiss: dismissTimer } = useRecipeTimers(id);
+  const currentTimer = currentStep ? timers.find((t) => t.order === currentStep.order) : undefined;
+  const otherTimers = currentStep ? timers.filter((t) => t.order !== currentStep.order) : timers;
 
   // Reset progress when navigating to a different recipe's cook mode,
   // adjusted during render (React's recommended pattern) rather than an effect.
@@ -102,10 +104,63 @@ export function CookMode({ id }: { id: string }) {
         <span className="cook-mode__step-label">Step {currentStep.order}</span>
         <p className="cook-mode__step-text">{currentStep.instruction}</p>
 
-        {currentStep.timerMinutes && (
-          <button type="button" className="cook-mode__timer" onClick={timer.toggle}>
-            {timer.running ? timer.display : `⏲ Start ${currentStep.timerMinutes} min timer`}
+        {currentStep.timerMinutes && !currentTimer && (
+          <button
+            type="button"
+            className="cook-mode__timer"
+            onClick={() =>
+              startTimer(
+                currentStep.order,
+                currentStep.timerMinutes!,
+                `Step ${currentStep.order}: ${currentStep.instruction}`,
+              )
+            }
+          >
+            ⏲ Start {currentStep.timerMinutes} min timer
           </button>
+        )}
+
+        {currentTimer?.running && (
+          <div className="cook-mode__timer-group">
+            <span className="cook-mode__timer cook-mode__timer--running">{formatClock(currentTimer.secondsLeft)}</span>
+            <button
+              type="button"
+              className="cook-mode__timer-cancel"
+              onClick={() => dismissTimer(currentStep.order)}
+            >
+              Cancel timer
+            </button>
+          </div>
+        )}
+
+        {currentTimer?.expired && (
+          <button
+            type="button"
+            className="cook-mode__timer cook-mode__timer--expired"
+            onClick={() => dismissTimer(currentStep.order)}
+          >
+            ⏰ Done — tap to dismiss
+          </button>
+        )}
+
+        {otherTimers.length > 0 && (
+          <div className="cook-mode__other-timers">
+            {otherTimers.map((t) => (
+              <button
+                key={t.order}
+                type="button"
+                className={
+                  "cook-mode__other-timer" + (t.expired ? " cook-mode__other-timer--expired" : "")
+                }
+                onClick={() => {
+                  const target = steps.findIndex((s) => s.order === t.order);
+                  if (target !== -1) setStepIndex(target);
+                }}
+              >
+                Step {t.order} · {t.expired ? "Done ⏰" : formatClock(t.secondsLeft)}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
