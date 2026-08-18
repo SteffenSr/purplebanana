@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { Recipe } from "./types";
+import type { Ingredient, IngredientNote, Recipe } from "./types";
 import { seedRecipes } from "./seed-recipes";
 
 /**
@@ -32,7 +32,8 @@ export const db = new RecipeDatabase();
  * the first one. A recipe present in seed-recipes.ts but missing locally
  * gets added; one whose bundled `updatedAt` is newer than the stored copy
  * gets its content refreshed (title/ingredients/steps/etc.) while keeping
- * the device's own `favorite`/`lastCookedAt` state; one that's no longer
+ * the device's own `favorite`/`lastCookedAt`/`stepNotes`/`ingredientNotes`
+ * state; one that's no longer
  * in seed-recipes.ts at all gets removed, since every recipe here is
  * shipped app content, not something the user authored themselves.
  * Without this, a returning user's device would stay stuck on whatever
@@ -54,6 +55,8 @@ export async function ensureSeeded(): Promise<void> {
         ...seedRecipe,
         favorite: current.favorite,
         lastCookedAt: current.lastCookedAt,
+        stepNotes: current.stepNotes,
+        ingredientNotes: current.ingredientNotes,
       });
     }
   }
@@ -88,4 +91,49 @@ export async function toggleFavorite(id: string): Promise<void> {
 
 export async function markCooked(id: string): Promise<void> {
   await db.recipes.update(id, { lastCookedAt: new Date().toISOString() });
+}
+
+/**
+ * Stable per-ingredient key for `ingredientNotes`, derived from the
+ * ingredient's English text rather than its array index — so a note stays
+ * attached to the right ingredient even if the list gets reordered, and
+ * only goes stale if the ingredient's own wording changes (at which point
+ * losing the note is reasonable, since it's arguably a different line now).
+ */
+export function ingredientKey(ingredient: Ingredient): string {
+  return ingredient.text.en
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export async function saveStepNote(recipeId: string, stepOrder: number, note: string): Promise<void> {
+  const recipe = await db.recipes.get(recipeId);
+  if (!recipe) return;
+  const stepNotes = { ...recipe.stepNotes };
+  const trimmed = note.trim();
+  if (trimmed) {
+    stepNotes[stepOrder] = trimmed;
+  } else {
+    delete stepNotes[stepOrder];
+  }
+  await db.recipes.update(recipeId, { stepNotes });
+}
+
+export async function saveIngredientNote(
+  recipeId: string,
+  key: string,
+  data: IngredientNote
+): Promise<void> {
+  const recipe = await db.recipes.get(recipeId);
+  if (!recipe) return;
+  const ingredientNotes = { ...recipe.ingredientNotes };
+  const note = data.note?.trim();
+  const amount = data.amount?.trim();
+  if (note || amount) {
+    ingredientNotes[key] = { note: note || undefined, amount: amount || undefined };
+  } else {
+    delete ingredientNotes[key];
+  }
+  await db.recipes.update(recipeId, { ingredientNotes });
 }

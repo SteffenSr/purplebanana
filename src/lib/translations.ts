@@ -50,6 +50,17 @@ export interface Dictionary {
     more: (n: number) => string;
     dismiss: string;
   };
+  notes: {
+    stepTitle: (n: number) => string;
+    ingredientTitle: (name: string) => string;
+    amountLabel: string;
+    amountPlaceholder: string;
+    noteLabel: string;
+    notePlaceholder: string;
+    save: string;
+    cancel: string;
+    addNote: string;
+  };
   languageSwitcher: {
     label: string;
   };
@@ -107,6 +118,17 @@ export const dictionaries: Record<Locale, Dictionary> = {
       more: (n) => ` (+${n} mere)`,
       dismiss: "Afvis",
     },
+    notes: {
+      stepTitle: (n) => `Note til trin ${n}`,
+      ingredientTitle: (name) => `Note til ${name}`,
+      amountLabel: "Din mængde",
+      amountPlaceholder: "f.eks. 2 tsk",
+      noteLabel: "Din note",
+      notePlaceholder: "Hvad vil du huske til næste gang?",
+      save: "Gem",
+      cancel: "Annullér",
+      addNote: "+ Tilføj note",
+    },
     languageSwitcher: {
       label: "Sprog",
     },
@@ -161,6 +183,17 @@ export const dictionaries: Record<Locale, Dictionary> = {
       done: (label) => `Timer done — ${label}`,
       more: (n) => ` (+${n} more)`,
       dismiss: "Dismiss",
+    },
+    notes: {
+      stepTitle: (n) => `Note for step ${n}`,
+      ingredientTitle: (name) => `Note for ${name}`,
+      amountLabel: "Your amount",
+      amountPlaceholder: "e.g. 2 tsp",
+      noteLabel: "Your note",
+      notePlaceholder: "What do you want to remember for next time?",
+      save: "Save",
+      cancel: "Cancel",
+      addNote: "+ Add note",
     },
     languageSwitcher: {
       label: "Language",

@@ -1,12 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { useRecipe } from "@/lib/hooks";
-import { toggleFavorite } from "@/lib/db";
+import { toggleFavorite, ingredientKey, saveStepNote, saveIngredientNote } from "@/lib/db";
 import { useLocale } from "@/lib/use-locale";
+import { NoteSheet } from "./NoteSheet";
+
+type OpenSheet =
+  | { kind: "step"; order: number }
+  | { kind: "ingredient"; key: string; label: string };
 
 export function RecipeDetail({ id }: { id: string }) {
   const { state, refresh } = useRecipe(id);
   const { locale, t } = useLocale();
+  const [openSheet, setOpenSheet] = useState<OpenSheet | null>(null);
 
   if (state.status === "loading") {
     return (
@@ -85,9 +92,30 @@ export function RecipeDetail({ id }: { id: string }) {
 
       <h2 className="section-title">{t.recipeDetail.ingredients}</h2>
       <ul className="ingredient-list">
-        {recipe.ingredients.map((ingredient, i) => (
-          <li key={i}>{ingredient.text[locale]}</li>
-        ))}
+        {recipe.ingredients.map((ingredient) => {
+          const key = ingredientKey(ingredient);
+          const ingredientNote = recipe.ingredientNotes?.[key];
+          const label = ingredient.text[locale];
+          return (
+            <li key={key}>
+              <button
+                type="button"
+                className="ingredient-list__button"
+                onClick={() => setOpenSheet({ kind: "ingredient", key, label })}
+              >
+                <span>{label}</span>
+                {ingredientNote?.amount && (
+                  <span className="ingredient-list__amount">{ingredientNote.amount}</span>
+                )}
+                {ingredientNote?.note && (
+                  <span className="ingredient-list__note-dot" aria-hidden>
+                    📝
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
       </ul>
 
       <h2 className="section-title">{t.recipeDetail.steps}</h2>
@@ -95,10 +123,45 @@ export function RecipeDetail({ id }: { id: string }) {
         {recipe.steps.map((step) => (
           <li key={step.order}>
             <span className="step-preview-list__number">{step.order}</span>
-            <span>{step.instruction[locale]}</span>
+            <button
+              type="button"
+              className="step-preview-list__button"
+              onClick={() => setOpenSheet({ kind: "step", order: step.order })}
+            >
+              <span>{step.instruction[locale]}</span>
+              {recipe.stepNotes?.[step.order] && (
+                <span className="step-preview-list__note-dot" aria-hidden>
+                  📝
+                </span>
+              )}
+            </button>
           </li>
         ))}
       </ol>
+
+      {openSheet?.kind === "step" && (
+        <NoteSheet
+          title={t.notes.stepTitle(openSheet.order)}
+          initialNote={recipe.stepNotes?.[openSheet.order] ?? ""}
+          onSave={({ note }) => {
+            saveStepNote(recipe.id, openSheet.order, note).then(refresh);
+          }}
+          onClose={() => setOpenSheet(null)}
+        />
+      )}
+
+      {openSheet?.kind === "ingredient" && (
+        <NoteSheet
+          title={t.notes.ingredientTitle(openSheet.label)}
+          showAmount
+          initialNote={recipe.ingredientNotes?.[openSheet.key]?.note ?? ""}
+          initialAmount={recipe.ingredientNotes?.[openSheet.key]?.amount ?? ""}
+          onSave={({ note, amount }) => {
+            saveIngredientNote(recipe.id, openSheet.key, { note, amount }).then(refresh);
+          }}
+          onClose={() => setOpenSheet(null)}
+        />
+      )}
     </div>
   );
 }

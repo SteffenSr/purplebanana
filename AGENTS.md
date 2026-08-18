@@ -79,6 +79,10 @@ src/lib/
   use-locale.ts               useLocale() hook: { locale, t, setLocale }
 src/components/
   AppHeader.tsx, LanguageSwitcher.tsx   header brand + DA/EN toggle
+  NoteSheet.tsx              bottom-sheet editor for a personal step/ingredient note
+                              (+ optional short "amount" override) — see Recipe.stepNotes /
+                              .ingredientNotes and ingredientKey() in db.ts for how these
+                              are keyed and preserved across a content update
 public/
   manifest.json, icon*.svg, sw.js   PWA + offline shell (sw.js is a template; see below)
   images/recipes/<id>.jpg  optional recipe photos, referenced by Recipe.imageUrl

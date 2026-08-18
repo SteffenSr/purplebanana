@@ -2,16 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { useRecipe } from "@/lib/hooks";
-import { markCooked } from "@/lib/db";
+import { markCooked, saveStepNote } from "@/lib/db";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { formatClock, useRecipeTimers } from "@/lib/use-timers";
 import { useLocale } from "@/lib/use-locale";
+import { NoteSheet } from "./NoteSheet";
 
 export function CookMode({ id }: { id: string }) {
-  const { state } = useRecipe(id);
+  const { state, refresh } = useRecipe(id);
   const { locale, t } = useLocale();
   const [stepIndex, setStepIndex] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
 
   // Keep the screen from locking mid-instruction — the point of this whole screen.
   useWakeLock();
@@ -20,6 +22,8 @@ export function CookMode({ id }: { id: string }) {
   const steps = useMemo(() => recipe?.steps ?? [], [recipe]);
   const currentStep = steps[stepIndex];
   const isLastStep = stepIndex === steps.length - 1;
+
+  const currentStepNote = currentStep ? recipe?.stepNotes?.[currentStep.order] : undefined;
 
   const { timers, start: startTimer, dismiss: dismissTimer } = useRecipeTimers(id);
   const currentTimer = currentStep ? timers.find((t) => t.order === currentStep.order) : undefined;
@@ -32,6 +36,7 @@ export function CookMode({ id }: { id: string }) {
     setLastId(id);
     setStepIndex(0);
     setFinished(false);
+    setNoteOpen(false);
   }
 
   if (state.status === "loading") {
@@ -166,7 +171,26 @@ export function CookMode({ id }: { id: string }) {
             ))}
           </div>
         )}
+
+        <button
+          type="button"
+          className={"cook-mode__note" + (currentStepNote ? " cook-mode__note--filled" : "")}
+          onClick={() => setNoteOpen(true)}
+        >
+          {currentStepNote ? `📝 ${currentStepNote}` : t.notes.addNote}
+        </button>
       </div>
+
+      {noteOpen && (
+        <NoteSheet
+          title={t.notes.stepTitle(currentStep.order)}
+          initialNote={currentStepNote ?? ""}
+          onSave={({ note }) => {
+            saveStepNote(recipe.id, currentStep.order, note).then(refresh);
+          }}
+          onClose={() => setNoteOpen(false)}
+        />
+      )}
 
       <div className="cook-mode__nav">
         <button
