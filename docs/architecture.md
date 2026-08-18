@@ -61,36 +61,60 @@ can't opportunistically cache that load's own requests:
   filenames unknown until after the build runs, so they can't be
   hand-written into the service worker source.
 
-`scripts/generate-sw-precache.mjs` closes both gaps. It runs after
-`next build` (so `out/` already exists) and rewrites the *built*
-`out/sw.js` (not the `public/sw.js` source template) with a precache list
-covering every recipe/cook route (from `seed-recipes.ts`) plus every
-hashed file under `out/_next/static`. The service worker's `install`
-handler fetches and caches that whole list before it ever activates, so as
-long as the service worker has installed once — which happens on the very
-first visit, before it even controls that page — every recipe opens
-offline from that point on, with no second reload required.
-`CACHE_VERSION` is a hash of the precached file list, so a build that
-changes any asset gets a fresh cache namespace and evicts the old one (see
-the `activate` handler) for returning users.
+`scripts/generate-sw-precache.mjs` closes both gaps — and it *is*
+`package.json`'s `"build"` script (`"build": "node
+scripts/generate-sw-precache.mjs"`), not a step chained after `next
+build`. That's the result of two rounds of this shipping broken in
+production despite working perfectly locally; both are worth knowing
+before touching this script.
 
-If a recipe is ever added or removed, this step regenerates the list
+**Round 1 — it ran as an npm `postbuild` hook.** Vercel's inferred build
+command for a detected Next.js project is `next build` directly, not
+`npm run build`, and npm's `pre`/`postbuild` hooks only fire for the
+latter — so Vercel silently skipped it. Fixed by adding `vercel.json`'s
+`"buildCommand": "npm run build"`, pinning the deploy host to a command
+that actually runs our script regardless of its own framework-detection
+defaults.
+
+**Round 2 — even with the right command running, it rewrote the wrong
+file.** The script used to run once, after `next build`, and patch the
+precache list directly into the *built* `out/sw.js`. That works for a
+plain static file server (serving `out/` with e.g. `npx serve`), which is
+how it was tested — but not on Vercel. Per Next.js's own docs, "the
+public directory isn't a real directory, it's a collection of routes
+created at build time": Vercel snapshots `public/` into its serving
+manifest *during* `next build` itself, so a post-hoc edit to `out/sw.js`
+never reaches what Vercel actually serves, even though the build
+"succeeds" and the source-level content looks right.
+
+The fix requires the correct content to exist in `public/sw.js` *before*
+a build snapshots it — but the precache list needs every hashed JS/CSS
+chunk filename, and those don't exist until *after* a build compiles
+them. So the script runs `next build` twice:
+
+1. Build once (thrown away) to learn the real chunk filenames.
+2. Compute the precache list from that output and write it into
+   `public/sw.js` — the committed source file.
+3. Build again, so *this* build's snapshot of `public/sw.js` (and thus
+   `out/sw.js`) carries the real list.
+4. Restore `public/sw.js` to its original committed template content, so
+   a local `npm run build` doesn't leave the working tree dirty —
+   `out/sw.js` (gitignored) keeps the generated version from step 3.
+
+`next.config.ts` pins `generateBuildId` to a fixed string for this to
+work: Next.js also writes a few manifest files under a
+`_next/static/<buildId>/` directory where the ID is randomized fresh on
+every `next build` invocation by default, which would otherwise make the
+two passes disagree on that directory's name even though the
+content-hashed chunk *filenames* are already stable across them (public/
+assets aren't bundled into JS/CSS, so changing `public/sw.js` between
+passes doesn't affect those hashes).
+
+`CACHE_VERSION` is a hash of the final precached file list, so a build
+that changes any asset gets a fresh cache namespace and evicts the old one
+(see the `activate` handler) for returning users. If a recipe is ever
+added or removed, the whole two-pass build regenerates the list
 automatically — nothing to remember to update by hand.
-
-**This step is chained onto `package.json`'s `"build"` script with `&&`
-(`next build && node scripts/generate-sw-precache.mjs`), deliberately
-*not* an npm `postbuild` lifecycle hook.** The first production deploy of
-this app shipped with an empty precache list and this exact offline bug
-still present, despite the script working perfectly locally — because
-Vercel's inferred build command for a detected Next.js project is
-`next build` directly, not `npm run build`, and npm's `pre`/`postbuild`
-hooks only fire for the latter. `vercel.json`'s `"buildCommand": "npm run
-build"` pins the deploy host to the command that actually runs our full
-build, independent of the host's own framework-detection defaults or
-dashboard settings. If this precache step is ever split back out into a
-separate `postbuild` script, or `vercel.json` is removed, this bug comes
-back — silently, since `npm run build` run locally would still look
-correct either way.
 
 ## Navigation uses plain `<a>`, not `next/link`
 

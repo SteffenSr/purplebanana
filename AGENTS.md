@@ -32,15 +32,22 @@ If a change works against either of those two goals, it's wrong even if it
   the app looks right on a cold offline load).
 - **Hand-rolled service worker** (`public/sw.js`), network-first with
   cache fallback for same-origin GETs. No Workbox/next-pwa dependency.
-  `scripts/generate-sw-precache.mjs` runs as the second half of the
-  `"build"` npm script (chained with `&&`, deliberately *not* an npm
-  `postbuild` lifecycle hook — hosts like Vercel often invoke `next build`
-  directly rather than `npm run build`, which silently skips lifecycle
-  hooks; `vercel.json`'s `buildCommand` pins Vercel to `npm run build` so
-  this can't be skipped) and rewrites the *built* `out/sw.js` with a full
-  precache list (every recipe/cook route + every hashed JS/CSS chunk) so a
-  recipe opens offline on the very first visit, not just after a second
-  reload.
+  `scripts/generate-sw-precache.mjs` *is* `package.json`'s `"build"`
+  script — not a step chained after `next build`, because that shipped
+  broken twice: first because Vercel's inferred build command for a
+  detected Next.js project is `next build` directly, not `npm run build`
+  (fixed by `vercel.json` pinning `buildCommand`); then because Vercel
+  snapshots `public/` into its serving manifest *during* `next build`
+  itself, so patching the precache list into the already-built `out/sw.js`
+  never reached what Vercel actually served, even though it worked for a
+  plain static file server locally. The script now runs `next build`
+  twice — once (thrown away) to learn the real hashed chunk filenames,
+  then it writes the full precache list into `public/sw.js` itself before
+  building again for real, then restores the committed template so the
+  working tree stays clean. `next.config.ts` pins `generateBuildId` so
+  both passes agree on `_next/static/<buildId>/` paths. See
+  docs/architecture.md's "Offline loading" section for the full story
+  before touching any of this.
 - Internal navigation uses plain `<a>`, not `next/link`'s `<Link>` — see
   docs/architecture.md's "Navigation uses plain `<a>`" section for why.
 
@@ -62,7 +69,7 @@ src/lib/
 public/
   manifest.json, icon*.svg, sw.js   PWA + offline shell (sw.js is a template; see below)
 scripts/
-  generate-sw-precache.mjs  2nd half of `npm run build`, writes the real precache list into out/sw.js
+  generate-sw-precache.mjs  the actual "build" script — runs next build twice, see above
 vercel.json                pins Vercel's build command to `npm run build` (see above)
 docs/
   architecture.md            why the static-export + IndexedDB split works this way

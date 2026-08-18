@@ -6,13 +6,14 @@ tools: Read, Edit, Grep, Glob, Bash
 
 You own the offline data path: `src/lib/db.ts` (Dexie/IndexedDB schema and
 queries), `src/lib/hooks.ts` (client data access), `public/sw.js` (the
-service worker template), `scripts/generate-sw-precache.mjs` (chained onto
-`npm run build` to rewrite the *built* `out/sw.js` with the real precache
-list), and `vercel.json` (pins the deploy host to actually run
-`npm run build` — see below for why that matters). This app has no
-backend — IndexedDB in the browser is the real database, and the service
-worker is what lets the static export load at all with no connection.
-Treat all of it carefully.
+service worker template), `scripts/generate-sw-precache.mjs` (which *is*
+the `"build"` npm script — see below), `next.config.ts`'s `generateBuildId`
+setting, and `vercel.json`. This app has no backend — IndexedDB in the
+browser is the real database, and the service worker is what lets the
+static export load at all with no connection. Treat all of it carefully;
+this path has shipped broken to production twice already for non-obvious
+reasons, both captured below and in docs/architecture.md's "Offline
+loading" section — read that before changing the build/precache flow.
 
 Rules:
 
@@ -25,35 +26,51 @@ Rules:
 - Keep IndexedDB access behind `src/lib/hooks.ts` / `db.ts` — don't reach
   into `db.recipes` directly from components; that keeps SSR-safety (guard
   any browser-only API) and error handling in one place.
-- `public/sw.js` is a *template* — editing `PRECACHE_URLS` or
-  `CACHE_VERSION` there has no lasting effect, since
-  `scripts/generate-sw-precache.mjs` overwrites both in `out/sw.js` after
-  every build (recipe/cook routes from `seed-recipes.ts`, plus every
-  hashed file under `out/_next/static`, with `CACHE_VERSION` derived from a
-  hash of that list so a changed build evicts old caches automatically).
-  If you change what should be precached, edit the generator script, not
-  the committed list.
-- The generator is chained onto `"build"` with `&&` (`next build && node
-  scripts/generate-sw-precache.mjs`) — deliberately *not* an npm
-  `postbuild` lifecycle hook, because a real deploy already shipped once
-  without the precache list: Vercel's default build command invokes
-  `next build` directly rather than `npm run build`, which silently skips
-  `pre`/`postbuild` hooks but still runs whatever the `"build"` script
-  literally contains. `vercel.json`'s `buildCommand: "npm run build"`
-  closes that gap. Don't split the generator back out into a `postbuild`
-  script, and don't remove `vercel.json` — either change reintroduces the
-  exact bug this fixed, silently, since the local build keeps working fine
-  either way and only the deployed host breaks.
+- `public/sw.js` is a *template*, committed with `CACHE_VERSION = "dev"`
+  and a bare-bones `PRECACHE_URLS`. Hand-editing those two values has no
+  lasting effect — don't bother. If you need to change *what* gets
+  precached, edit `scripts/generate-sw-precache.mjs`.
+- **`scripts/generate-sw-precache.mjs` is `package.json`'s `"build"`
+  script**, not a step chained after `next build`. It runs `next build`
+  *twice*: once (thrown away) to learn the real hashed chunk filenames,
+  then it writes the full precache list (every recipe/cook route from
+  `seed-recipes.ts`, plus every hashed file under `_next/static`, with
+  `CACHE_VERSION` a hash of that list) into `public/sw.js` itself, builds
+  again for real, then restores `public/sw.js` to the committed template
+  so a local build doesn't leave the working tree dirty. This exists
+  because a single-pass "build, then patch `out/sw.js`" version shipped
+  broken on Vercel: per Next's own docs, "the public directory ... [is] a
+  collection of routes created at build time" — Vercel snapshots
+  `public/` into its serving manifest *during* `next build`, so editing
+  the built output afterwards never reaches what Vercel serves, even
+  though that approach works fine for a plain static file server and
+  looks completely correct in local testing.
+- `next.config.ts` pins `generateBuildId` to a fixed string. Next
+  otherwise randomizes that ID on every `next build` call, and the two
+  passes above need to agree on the resulting `_next/static/<buildId>/`
+  path for the precomputed manifest-file list to still be valid after the
+  second build. Don't remove this without understanding why it's there.
+- `vercel.json` pins `buildCommand` to `npm run build`. Vercel's inferred
+  default for a detected Next.js project is `next build` directly, which
+  silently skips whatever npm-script-level logic exists — this was the
+  *first* way this shipped broken, before the `out/sw.js`-patching issue
+  above was even found. Don't remove `vercel.json`.
 - Internal navigation uses plain `<a>`, never `next/link`'s `<Link>` — its
   client-side soft navigation has no offline fallback. Don't reintroduce
   `Link` for in-app links; see docs/architecture.md's "Navigation uses
   plain `<a>`" section for why.
-- After changes here, manually verify the offline path end to end: build
-  (`npm run build`, and check its output includes the "Precached N URLs"
-  line), serve `out/` (e.g. `npx serve out`, no `-s`/single-page flag — that flag
-  rewrites every route to `index.html` and will make every page look
-  identical), load the app **once** online, then disable the network
-  (devtools, or a real offline test) and confirm a recipe you never
-  individually visited still opens and cook mode still renders. Loading it
-  twice before going offline is not a valid test — the whole point of the
-  precache step is that it has to work after just one visit.
+- After changes here, verify against the **actual deploy target**, not
+  just a local static server — the two production bugs above both passed
+  local testing cleanly. At minimum: run `npm run build` and confirm its
+  output ends with a "Precached N URLs..." line; confirm `git status
+  public/sw.js` is clean afterward (a dirty diff there means the
+  restore-the-template step didn't run, usually because the build
+  errored); serve `out/` (`npx serve out`, no `-s`/single-page flag — that
+  flag rewrites every route to `index.html` and masks real routing bugs);
+  load the app **once** online, then go offline and confirm a recipe you
+  never individually visited still opens and cook mode still renders
+  (loading twice before going offline is not a valid test — the whole
+  point of precaching is that it works after one visit). If a real
+  deployment is available, verify against the deployed `sw.js` too
+  (`curl <site>/sw.js | grep CACHE_VERSION` should show a hash, not
+  `"dev"`) — this exact class of bug only reproduced there, not locally.
