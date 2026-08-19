@@ -28,9 +28,12 @@ export const seedRecipes: Recipe[] = [
     ingredients: [
       { text: { da: "400 g pasta (rigatoni eller penne)", en: "400 g pasta (rigatoni or penne)" } },
       { text: { da: "2 spsk olivenolie", en: "2 tbsp olive oil" } },
-      { text: { da: "1 lille løg, finthakket", en: "1 small onion, finely chopped" } },
+      { text: { da: "1 lille løg, finthakket", en: "1 small onion, finely chopped" }, ingredientId: "onion" },
       { text: { da: "3 fed hvidløg, finthakket", en: "3 cloves garlic, minced" }, ingredientId: "garlic" },
-      { text: { da: "700 g knuste tomater", en: "700 g crushed tomatoes" } },
+      {
+        text: { da: "700 g knuste tomater", en: "700 g crushed tomatoes" },
+        ingredientId: "canned-tomatoes",
+      },
       { text: { da: "150 ml fed kokosmælk", en: "150 ml full-fat coconut milk" }, ingredientId: "coconut-milk" },
       {
         text: { da: "3 spsk nutritional yeast (gærflager)", en: "3 tbsp nutritional yeast" },
@@ -105,7 +108,7 @@ export const seedRecipes: Recipe[] = [
         ingredientRefs: ["fresh-basil-torn"],
       },
     ],
-    updatedAt: "2026-08-19T12:00:00.000Z",
+    updatedAt: "2026-08-19T13:00:00.000Z",
   },
   {
     id: "morning-oat-porridge",
@@ -186,7 +189,7 @@ export const seedRecipes: Recipe[] = [
       },
       { text: { da: "1 spsk kokosolie", en: "1 tbsp coconut oil" }, ingredientId: "coconut-oil" },
       { text: { da: "1 tsk spidskommenfrø", en: "1 tsp cumin seeds" }, ingredientId: "cumin-seeds" },
-      { text: { da: "1 løg, finthakket", en: "1 onion, finely chopped" } },
+      { text: { da: "1 løg, finthakket", en: "1 onion, finely chopped" }, ingredientId: "onion" },
       { text: { da: "3 fed hvidløg, finthakket", en: "3 cloves garlic, minced" }, ingredientId: "garlic" },
       {
         text: { da: "1 spsk frisk ingefær, revet", en: "1 tbsp fresh ginger, grated" },
@@ -194,7 +197,10 @@ export const seedRecipes: Recipe[] = [
       },
       { text: { da: "1 tsk stødt gurkemeje", en: "1 tsp ground turmeric" }, ingredientId: "ground-turmeric" },
       { text: { da: "1 tsk stødt koriander", en: "1 tsp ground coriander" }, ingredientId: "ground-coriander" },
-      { text: { da: "400 g hakkede tomater på dåse", en: "400 g canned chopped tomatoes" } },
+      {
+        text: { da: "400 g hakkede tomater på dåse", en: "400 g canned chopped tomatoes" },
+        ingredientId: "canned-tomatoes",
+      },
       { text: { da: "700 ml vand eller grøntsagsbouillon", en: "700 ml water or vegetable stock" } },
       { text: { da: "Salt, efter smag", en: "Salt, to taste" } },
       { text: { da: "Frisk koriander, hakket, til servering", en: "Fresh cilantro, chopped, to serve" } },
@@ -276,7 +282,7 @@ export const seedRecipes: Recipe[] = [
         ingredientRefs: ["salt-to-taste", "fresh-cilantro-chopped-to-serve"],
       },
     ],
-    updatedAt: "2026-08-19T12:00:00.000Z",
+    updatedAt: "2026-08-19T13:00:00.000Z",
   },
   {
     id: "yellow-split-pea-dal-ginger",
@@ -301,7 +307,7 @@ export const seedRecipes: Recipe[] = [
         ingredientId: "black-mustard-seeds",
       },
       { text: { da: "1 tsk spidskommenfrø", en: "1 tsp cumin seeds" }, ingredientId: "cumin-seeds" },
-      { text: { da: "1 løg, finthakket", en: "1 onion, finely chopped" } },
+      { text: { da: "1 løg, finthakket", en: "1 onion, finely chopped" }, ingredientId: "onion" },
       {
         text: { da: "2 spsk frisk ingefær, revet", en: "2 tbsp fresh ginger, grated" },
         ingredientId: "fresh-ginger",
@@ -389,7 +395,7 @@ export const seedRecipes: Recipe[] = [
         ingredientRefs: ["salt-to-taste", "juice-of-1-2-lemon"],
       },
     ],
-    updatedAt: "2026-08-19T12:00:00.000Z",
+    updatedAt: "2026-08-19T13:00:00.000Z",
   },
   {
     id: "coconut-spinach-dal",
@@ -410,7 +416,7 @@ export const seedRecipes: Recipe[] = [
       },
       { text: { da: "1 spsk kokosolie", en: "1 tbsp coconut oil" }, ingredientId: "coconut-oil" },
       { text: { da: "1 tsk spidskommenfrø", en: "1 tsp cumin seeds" }, ingredientId: "cumin-seeds" },
-      { text: { da: "1 løg, finthakket", en: "1 onion, finely chopped" } },
+      { text: { da: "1 løg, finthakket", en: "1 onion, finely chopped" }, ingredientId: "onion" },
       { text: { da: "3 fed hvidløg, finthakket", en: "3 cloves garlic, minced" }, ingredientId: "garlic" },
       {
         text: { da: "1 spsk frisk ingefær, revet", en: "1 tbsp fresh ginger, grated" },
@@ -503,7 +509,7 @@ export const seedRecipes: Recipe[] = [
         ingredientRefs: ["salt-to-taste"],
       },
     ],
-    updatedAt: "2026-08-19T12:00:00.000Z",
+    updatedAt: "2026-08-19T13:00:00.000Z",
   },
   {
     id: "palak-tofu",
@@ -527,9 +533,12 @@ export const seedRecipes: Recipe[] = [
       { text: { da: "1 tsk spidskommenfrø", en: "1 tsp cumin seeds" }, ingredientId: "cumin-seeds" },
       { text: { da: "1 tsk stødt koriander", en: "1 tsp ground coriander" }, ingredientId: "ground-coriander" },
       { text: { da: "1 tsk stødt gurkemeje", en: "1 tsp ground turmeric" }, ingredientId: "ground-turmeric" },
-      { text: { da: "1 løg, finthakket", en: "1 onion, finely chopped" } },
+      { text: { da: "1 løg, finthakket", en: "1 onion, finely chopped" }, ingredientId: "onion" },
       { text: { da: "3 fed hvidløg, finthakket", en: "3 cloves garlic, minced" }, ingredientId: "garlic" },
-      { text: { da: "400 g hakkede tomater på dåse", en: "400 g canned chopped tomatoes" } },
+      {
+        text: { da: "400 g hakkede tomater på dåse", en: "400 g canned chopped tomatoes" },
+        ingredientId: "canned-tomatoes",
+      },
       { text: { da: "400 ml kokosmælk på dåse", en: "400 ml canned coconut milk" }, ingredientId: "coconut-milk" },
       {
         text: {
@@ -649,7 +658,7 @@ export const seedRecipes: Recipe[] = [
         ingredientRefs: ["2-cm-fresh-ginger-grated", "juice-of-1-lime", "salt-to-taste", "1-2-tbsp-maple-syrup-or-agave-syrup"],
       },
     ],
-    updatedAt: "2026-08-19T12:00:00.000Z",
+    updatedAt: "2026-08-19T13:00:00.000Z",
   },
   {
     id: "murgh-makhani",
@@ -677,10 +686,13 @@ export const seedRecipes: Recipe[] = [
       { text: { da: "1 tsk stødt spidskommen", en: "1 tsp ground cumin" }, ingredientId: "cumin-seeds" },
       { text: { da: "1 tsk stødt gurkemeje", en: "1 tsp ground turmeric" }, ingredientId: "ground-turmeric" },
       { text: { da: "Olie til stegning", en: "Oil, for frying" } },
-      { text: { da: "1 stort løg, hakket", en: "1 large onion, chopped" } },
+      { text: { da: "1 stort løg, hakket", en: "1 large onion, chopped" }, ingredientId: "onion" },
       { text: { da: "2 fed hvidløg, hakkede", en: "2 cloves garlic, minced" }, ingredientId: "garlic" },
       { text: { da: "3 spsk tomatpuré", en: "3 tbsp tomato paste" } },
-      { text: { da: "400 g hakkede tomater på dåse", en: "400 g canned chopped tomatoes" } },
+      {
+        text: { da: "400 g hakkede tomater på dåse", en: "400 g canned chopped tomatoes" },
+        ingredientId: "canned-tomatoes",
+      },
       { text: { da: "1 frisk chili, hakket", en: "1 fresh chili, chopped" } },
       {
         text: { da: "2 cm frisk ingefær, revet", en: "2 cm fresh ginger, grated" },
@@ -811,6 +823,6 @@ export const seedRecipes: Recipe[] = [
         },
       },
     ],
-    updatedAt: "2026-08-19T12:00:00.000Z",
+    updatedAt: "2026-08-19T13:00:00.000Z",
   },
 ];

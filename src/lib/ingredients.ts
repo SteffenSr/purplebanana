@@ -2,9 +2,11 @@ import type { IngredientProfile } from "./types";
 
 /**
  * Bundled ingredient reference data — one entry per ingredient that's worth
- * a details page (distinctive spices and dal staples, not every "onion" or
- * "salt" line). Referenced from `seed-recipes.ts` via `Ingredient.ingredientId`
- * and rendered at `/ingredients/<id>`. Static content, like `seed-recipes.ts`
+ * a details page: distinctive spices and dal staples, plus any ingredient
+ * recurring across three or more recipes (that's the line "onion" and
+ * "canned tomatoes" cross but "salt", "water", and one-off items don't).
+ * Referenced from `seed-recipes.ts` via `Ingredient.ingredientId` and
+ * rendered at `/ingredients/<id>`. Static content, like `seed-recipes.ts`
  * itself — not stored in IndexedDB, nothing here is user-editable.
  *
  * Nutrition figures are typical values per the stated basis (usually per
@@ -427,6 +429,55 @@ export const ingredientProfiles: IngredientProfile[] = [
     whereToBuy: [
       { da: "Indiske/asiatiske specialbutikker", en: "Indian/Asian grocery stores" },
       { da: "Online kryddeributikker", en: "Online spice retailers" },
+    ],
+  },
+  {
+    id: "onion",
+    name: { da: "Løg", en: "Onion" },
+    otherNames: [
+      { da: "Kartoffelløg (det almindelige gule/brune løg)", en: "Yellow/brown onion" },
+      { da: "Skalotteløg — mildere, kan bruges i stedet", en: "Shallot — milder, works as a substitute" },
+    ],
+    emoji: "🧅",
+    flavorAndRole: {
+      da: "Skarp og svovlholdig rå, med tårefremkaldende dampe fra skæringen, men bliver sød og mild, jo længere den steges. Finthakket løg er den mest almindelige base i madlavning verden over — stegt blødt og gyldent, før andre aromaer som hvidløg og ingefær tilsættes, bygger den den grundlæggende sødme og dybde, resten af retten hviler på.",
+      en: "Sharp and sulfurous raw, with tear-inducing fumes while you chop it, but turns sweet and mellow the longer it's cooked. Finely chopped onion is the most common base in cooking worldwide — sautéed soft and golden before other aromatics like garlic and ginger go in, it builds the foundational sweetness and depth the rest of a dish rests on.",
+    },
+    nutrition: {
+      per: { da: "Pr. 100 g, rå", en: "Per 100 g, raw" },
+      calories: 40,
+      proteinG: 1.1,
+      carbsG: 9.3,
+      fatG: 0.1,
+      fiberG: 1.7,
+    },
+    whereToBuy: [
+      { da: "Grøntsagsafdelingen i alle supermarkeder", en: "The produce section of every supermarket" },
+    ],
+  },
+  {
+    id: "canned-tomatoes",
+    name: { da: "Tomater på dåse", en: "Canned tomatoes" },
+    otherNames: [
+      { da: "Hakkede tomater på dåse", en: "Canned chopped tomatoes" },
+      { da: "Knuste tomater på dåse", en: "Canned crushed tomatoes" },
+      { da: "Passata — jævnere, uden stykker", en: "Passata — a smoother, chunk-free alternative" },
+    ],
+    emoji: "🍅",
+    flavorAndRole: {
+      da: "Syrlig og rund i smagen med en naturlig sødme, der bliver mere koncentreret, jo længere den simrer. Fordi tomaterne er dåsekonserverede på toppunktet af sæsonen, giver de en mere pålidelig smag året rundt end friske tomater uden for sæson. De danner både den flydende base og den syrlige modvægt i alt fra pastasauce til karry.",
+      en: "Tangy and rounded, with a natural sweetness that concentrates the longer it simmers. Because the tomatoes are canned at peak ripeness, they give a more reliable flavor year-round than out-of-season fresh tomatoes. They form both the liquid base and the tangy counterweight in everything from pasta sauce to curry.",
+    },
+    nutrition: {
+      per: { da: "Pr. 100 g, med saft", en: "Per 100 g, with juice" },
+      calories: 18,
+      proteinG: 0.9,
+      carbsG: 3.9,
+      fatG: 0.2,
+      fiberG: 1,
+    },
+    whereToBuy: [
+      { da: "Dåsevarehylden i alle supermarkeder", en: "The canned goods aisle of every supermarket" },
     ],
   },
 ];
