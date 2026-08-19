@@ -3,6 +3,7 @@
 import { useLocale } from "@/lib/use-locale";
 import { OnlineStatus } from "@/components/OnlineStatus";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ExperimentsButton } from "@/components/ExperimentsButton";
 
 /**
  * Client component so the brand name can follow the current language —
@@ -23,6 +24,7 @@ export function AppHeader() {
           {t.appName}
         </a>
         <div className="app-header__controls">
+          <ExperimentsButton />
           <OnlineStatus />
           <LanguageSwitcher />
         </div>
