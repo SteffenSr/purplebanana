@@ -1,4 +1,5 @@
 import type { Locale } from "./locale";
+import type { ExperimentId } from "./experiments";
 
 export interface Dictionary {
   appName: string;
@@ -63,6 +64,18 @@ export interface Dictionary {
   };
   languageSwitcher: {
     label: string;
+  };
+  experiments: {
+    openLabel: string;
+    hub: {
+      heading: string;
+      subheading: string;
+    };
+    items: Record<ExperimentId, { title: string; description: string }>;
+    landing: {
+      comingSoon: string;
+      backToExperiments: string;
+    };
   };
 }
 
@@ -132,6 +145,40 @@ export const dictionaries: Record<Locale, Dictionary> = {
     languageSwitcher: {
       label: "Sprog",
     },
+    experiments: {
+      openLabel: "Eksperimenter",
+      hub: {
+        heading: "Eksperimenter",
+        subheading:
+          "Udviklerfunktion: genveje til appoplevelser under udvikling — endnu ikke rigtige funktioner.",
+      },
+      items: {
+        onboarding: {
+          title: "Onboarding",
+          description: "Førstegangsoplevelsen for nye brugere.",
+        },
+        login: {
+          title: "Log ind",
+          description: "Login- og oprettelsesflow.",
+        },
+        profile: {
+          title: "Profil",
+          description: "Profil- og kontoindstillinger.",
+        },
+        "habit-assistant": {
+          title: "Vaneassistent",
+          description: "En assistent der hjælper med at ændre madvaner.",
+        },
+        chatbot: {
+          title: "Opskrifts-chatbot",
+          description: "Gratis chatbot om opskrifter og ernæring.",
+        },
+      },
+      landing: {
+        comingSoon: "Denne funktion er ikke bygget endnu — dette er kun en landingsside til navigationstest.",
+        backToExperiments: "← Tilbage til eksperimenter",
+      },
+    },
   },
   en: {
     appName: "Kitchen Recipes",
@@ -197,6 +244,40 @@ export const dictionaries: Record<Locale, Dictionary> = {
     },
     languageSwitcher: {
       label: "Language",
+    },
+    experiments: {
+      openLabel: "Experiments",
+      hub: {
+        heading: "Experiments",
+        subheading:
+          "Developer feature: shortcuts to app experiences that are still being built — not real features yet.",
+      },
+      items: {
+        onboarding: {
+          title: "Onboarding",
+          description: "The first-run experience for new users.",
+        },
+        login: {
+          title: "Login",
+          description: "Sign-in and account creation flow.",
+        },
+        profile: {
+          title: "Profile",
+          description: "Profile and account settings.",
+        },
+        "habit-assistant": {
+          title: "Habit assistant",
+          description: "An assistant that helps change cooking habits.",
+        },
+        chatbot: {
+          title: "Recipe chatbot",
+          description: "A free chatbot about recipes and nutrition.",
+        },
+      },
+      landing: {
+        comingSoon: "This feature isn't built yet — this is just a landing page for navigation testing.",
+        backToExperiments: "← Back to experiments",
+      },
     },
   },
 };
