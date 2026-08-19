@@ -60,6 +60,7 @@ export interface Dictionary {
     save: string;
     cancel: string;
     addNote: string;
+    ingredientInfo: string;
   };
   languageSwitcher: {
     label: string;
@@ -76,7 +77,6 @@ export interface Dictionary {
     fat: (n: number) => string;
     fiber: (n: number) => string;
     whereToBuy: string;
-    viewDetails: (name: string) => string;
   };
 }
 
@@ -142,6 +142,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       save: "Gem",
       cancel: "Annullér",
       addNote: "+ Tilføj note",
+      ingredientInfo: "Ingrediensinformation",
     },
     languageSwitcher: {
       label: "Sprog",
@@ -158,7 +159,6 @@ export const dictionaries: Record<Locale, Dictionary> = {
       fat: (n) => `${n} g fedt`,
       fiber: (n) => `${n} g kostfibre`,
       whereToBuy: "Hvor du kan købe det",
-      viewDetails: (name) => `Om ${name}`,
     },
   },
   en: {
@@ -222,6 +222,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       save: "Save",
       cancel: "Cancel",
       addNote: "+ Add note",
+      ingredientInfo: "Ingredient information",
     },
     languageSwitcher: {
       label: "Language",
@@ -238,7 +239,6 @@ export const dictionaries: Record<Locale, Dictionary> = {
       fat: (n) => `${n} g fat`,
       fiber: (n) => `${n} g fiber`,
       whereToBuy: "Where to buy it",
-      viewDetails: (name) => `About ${name}`,
     },
   },
 };
