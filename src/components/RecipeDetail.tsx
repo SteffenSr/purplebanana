@@ -98,6 +98,15 @@ export function RecipeDetail({ id }: { id: string }) {
           const label = ingredient.text[locale];
           return (
             <li key={key}>
+              {ingredient.ingredientId && (
+                <a
+                  href={`/ingredients/${ingredient.ingredientId}/`}
+                  className="btn btn-icon ingredient-list__info-btn"
+                  aria-label={t.ingredientDetail.viewDetails(label)}
+                >
+                  ℹ️
+                </a>
+              )}
               <button
                 type="button"
                 className="ingredient-list__button"

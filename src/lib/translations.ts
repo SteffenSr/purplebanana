@@ -64,6 +64,20 @@ export interface Dictionary {
   languageSwitcher: {
     label: string;
   };
+  ingredientDetail: {
+    notFound: string;
+    back: string;
+    otherNames: string;
+    flavorAndRole: string;
+    nutrition: string;
+    calories: (n: number) => string;
+    protein: (n: number) => string;
+    carbs: (n: number) => string;
+    fat: (n: number) => string;
+    fiber: (n: number) => string;
+    whereToBuy: string;
+    viewDetails: (name: string) => string;
+  };
 }
 
 export const dictionaries: Record<Locale, Dictionary> = {
@@ -132,6 +146,20 @@ export const dictionaries: Record<Locale, Dictionary> = {
     languageSwitcher: {
       label: "Sprog",
     },
+    ingredientDetail: {
+      notFound: "Ingrediensen findes ikke.",
+      back: "Tilbage",
+      otherNames: "Andre navne",
+      flavorAndRole: "Smag, konsistens og rolle i retten",
+      nutrition: "Næringsindhold",
+      calories: (n) => `${n} kcal`,
+      protein: (n) => `${n} g protein`,
+      carbs: (n) => `${n} g kulhydrat`,
+      fat: (n) => `${n} g fedt`,
+      fiber: (n) => `${n} g kostfibre`,
+      whereToBuy: "Hvor du kan købe det",
+      viewDetails: (name) => `Om ${name}`,
+    },
   },
   en: {
     appName: "Kitchen Recipes",
@@ -197,6 +225,20 @@ export const dictionaries: Record<Locale, Dictionary> = {
     },
     languageSwitcher: {
       label: "Language",
+    },
+    ingredientDetail: {
+      notFound: "This ingredient doesn't exist.",
+      back: "Back",
+      otherNames: "Other names",
+      flavorAndRole: "Flavor, texture & role in a dish",
+      nutrition: "Nutrition",
+      calories: (n) => `${n} kcal`,
+      protein: (n) => `${n} g protein`,
+      carbs: (n) => `${n} g carbs`,
+      fat: (n) => `${n} g fat`,
+      fiber: (n) => `${n} g fiber`,
+      whereToBuy: "Where to buy it",
+      viewDetails: (name) => `About ${name}`,
     },
   },
 };

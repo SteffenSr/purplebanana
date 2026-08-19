@@ -75,12 +75,23 @@ function computePrecacheUrls() {
   }
   const recipeUrls = ids.flatMap((id) => [`/recipes/${id}/`, `/recipes/${id}/cook/`]);
 
+  // Ingredient detail pages (/ingredients/<id>/) — same regex-over-source
+  // approach as recipe ids above, since this script is plain Node/ESM run
+  // outside Next's build and isn't TypeScript-aware.
+  const ingredientsSource = readFileSync(path.join(repoRoot, "src/lib/ingredients.ts"), "utf8");
+  const ingredientIds = [...ingredientsSource.matchAll(/^\s*id:\s*"([^"]+)"/gm)].map((m) => m[1]);
+  if (ingredientIds.length === 0) {
+    throw new Error("No ingredient ids found in ingredients.ts — regex may be out of sync");
+  }
+  const ingredientUrls = ingredientIds.map((id) => `/ingredients/${id}/`);
+
   const precacheUrls = [
     "/",
     "/manifest.json",
     "/icon.svg",
     "/icon-maskable.svg",
     ...recipeUrls,
+    ...ingredientUrls,
     ...imageUrls,
     ...chunkUrls,
   ];
@@ -100,7 +111,7 @@ function computePrecacheUrls() {
     .join("\n");
   const cacheVersion = createHash("sha256").update(fingerprint).digest("hex").slice(0, 10);
 
-  return { precacheUrls, cacheVersion, recipeUrls, chunkUrls, imageUrls };
+  return { precacheUrls, cacheVersion, recipeUrls, ingredientUrls, chunkUrls, imageUrls };
 }
 
 function writeSwContent(targetPath, template, { precacheUrls, cacheVersion }) {
@@ -129,8 +140,8 @@ try {
 
   console.log(
     `Precached ${result.precacheUrls.length} URLs ` +
-      `(${result.recipeUrls.length} recipe routes, ${result.imageUrls.length} images, ` +
-      `${result.chunkUrls.length} chunks) [${result.cacheVersion}]`
+      `(${result.recipeUrls.length} recipe routes, ${result.ingredientUrls.length} ingredient routes, ` +
+      `${result.imageUrls.length} images, ${result.chunkUrls.length} chunks) [${result.cacheVersion}]`
   );
 } finally {
   writeFileSync(publicSwPath, originalTemplate); // never leave the working tree dirty

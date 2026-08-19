@@ -11,6 +11,50 @@ export interface LocalizedText {
 
 export interface Ingredient {
   text: LocalizedText;
+  /**
+   * Links this ingredient line to its details page, keyed into
+   * `ingredientProfiles` in `src/lib/ingredients.ts`. Optional — only set
+   * for ingredients that have a profile (spices, dal staples, etc.), not
+   * every line (onion, salt, water aren't worth a details page).
+   */
+  ingredientId?: string;
+}
+
+/** Structured macros shown on an ingredient's details page, per `per`. */
+export interface IngredientNutrition {
+  /** What the numbers below are measured against, e.g. "Per 100 g". */
+  per: LocalizedText;
+  calories: number;
+  proteinG: number;
+  carbsG: number;
+  fatG: number;
+  fiberG?: number;
+  /** Optional caveat, e.g. that a spice is eaten in pinches, not 100 g. */
+  note?: LocalizedText;
+}
+
+/**
+ * A single ingredient's details page — names, flavor/texture notes,
+ * nutrition, and where to buy it. Bundled, static content (like
+ * `seed-recipes.ts`), not stored in IndexedDB: nothing here is user-editable.
+ */
+export interface IngredientProfile {
+  /** Stable slug, also the `/ingredients/<id>` route param. */
+  id: string;
+  name: LocalizedText;
+  /** Other names, spellings, or labels this ingredient goes by (incl. E-numbers where relevant). */
+  otherNames: LocalizedText[];
+  emoji: string;
+  /**
+   * Optional photos/illustrations, e.g. "/images/ingredients/<id>-1.jpg".
+   * Falls back to `emoji` when unset — same convention as `Recipe.imageUrl`.
+   */
+  images?: string[];
+  /** What it tastes/feels like, and what role it typically plays in a recipe. */
+  flavorAndRole: LocalizedText;
+  nutrition: IngredientNutrition;
+  /** Places to buy it, e.g. "Indian/Asian grocery stores". */
+  whereToBuy: LocalizedText[];
 }
 
 export interface Step {
