@@ -94,6 +94,21 @@ export function IngredientDetail({ id }: { id: string }) {
           <li key={place.en}>{place[locale]}</li>
         ))}
       </ul>
+
+      {ingredient.greenlistTag && (
+        // Real external link, opened in a new tab — unlike every other link
+        // in this app, this one isn't a bundled route and needs a live
+        // connection. rel="noopener noreferrer" since target="_blank" would
+        // otherwise give the opened page access back to this window.
+        <a
+          href={`https://greenlist.dk/tags/${ingredient.greenlistTag}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-secondary btn-block"
+        >
+          {t.ingredientDetail.viewOnGreenlist} ↗
+        </a>
+      )}
     </div>
   );
 }

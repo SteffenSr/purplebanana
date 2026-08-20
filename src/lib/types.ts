@@ -56,6 +56,13 @@ export interface IngredientProfile {
   nutrition?: IngredientNutrition;
   /** Places to buy it, e.g. "Indian/Asian grocery stores", or specific store names for a branded product. */
   whereToBuy: LocalizedText[];
+  /**
+   * Slug of this ingredient's category on greenlist.dk (a Danish vegan
+   * product database), e.g. "tofu" for `https://greenlist.dk/tags/tofu`.
+   * Omitted where no tag on that site maps cleanly to this ingredient —
+   * see the sourcing note atop `ingredients.ts`.
+   */
+  greenlistTag?: string;
 }
 
 export interface Step {

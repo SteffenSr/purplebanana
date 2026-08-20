@@ -37,6 +37,15 @@ import type { IngredientProfile } from "./types";
  * these products stop showing up in the field, re-query the API (see the
  * `products/{slug}` endpoint, e.g. `like-meat-like-chicken-bites` and
  * `block`) and update `whereToBuy` by hand.
+ *
+ * `greenlistTag` (most entries) links to that same site's public category
+ * browse pages, `https://greenlist.dk/tags/<tag>` — a live, external page
+ * the user opens in a new tab from the ingredient's "where to buy" section,
+ * not bundled content, so it naturally needs a connection (unlike the rest
+ * of this app). Chosen from `GET /api/v1/tags`'s real slug list, matching
+ * only where a tag clearly names this specific ingredient (e.g. "tofu",
+ * "kylling" for a chicken substitute) — left unset rather than forced onto
+ * a vague catch-all tag like "mad" (food) when nothing fits.
  */
 export const ingredientProfiles: IngredientProfile[] = [
   {
@@ -68,6 +77,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Krydderihylden i de fleste supermarkeder", en: "The spice aisle of most supermarkets" },
       { da: "Indiske/asiatiske specialbutikker (billigere i store poser)", en: "Indian/Asian grocery stores (cheaper in bulk bags)" },
     ],
+    greenlistTag: "krydderi",
   },
   {
     id: "ground-turmeric",
@@ -101,6 +111,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Krydderihylden i de fleste supermarkeder", en: "The spice aisle of most supermarkets" },
       { da: "Indiske/asiatiske specialbutikker (billigere i store poser)", en: "Indian/Asian grocery stores (cheaper in bulk bags)" },
     ],
+    greenlistTag: "krydderi",
   },
   {
     id: "fresh-ginger",
@@ -126,6 +137,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Grøntsagsafdelingen i de fleste supermarkeder", en: "The produce section of most supermarkets" },
       { da: "Indiske/asiatiske specialbutikker (ofte friskere og billigere)", en: "Indian/Asian grocery stores (often fresher and cheaper)" },
     ],
+    greenlistTag: "ingefaer",
   },
   {
     id: "garlic",
@@ -150,6 +162,7 @@ export const ingredientProfiles: IngredientProfile[] = [
     whereToBuy: [
       { da: "Grøntsagsafdelingen i alle supermarkeder", en: "The produce section of every supermarket" },
     ],
+    greenlistTag: "hvidloeg",
   },
   {
     id: "red-lentils",
@@ -175,6 +188,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Almindelige supermarkeder (ris- og bønnehylden)", en: "Regular supermarkets (rice and beans aisle)" },
       { da: "Indiske/asiatiske specialbutikker (billigere i store poser)", en: "Indian/Asian grocery stores (cheaper in bulk bags)" },
     ],
+    greenlistTag: "baelgfrugt",
   },
   {
     id: "yellow-split-peas",
@@ -200,6 +214,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Almindelige supermarkeder (ris- og bønnehylden)", en: "Regular supermarkets (rice and beans aisle)" },
       { da: "Indiske/asiatiske specialbutikker (billigere i store poser)", en: "Indian/Asian grocery stores (cheaper in bulk bags)" },
     ],
+    greenlistTag: "baelgfrugt",
   },
   {
     id: "coconut-milk",
@@ -225,6 +240,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Almindelige supermarkeder", en: "Regular supermarkets" },
       { da: "Asiatiske specialbutikker (ofte billigere pr. dåse)", en: "Asian grocery stores (often cheaper per can)" },
     ],
+    greenlistTag: "kokos",
   },
   {
     id: "coconut-oil",
@@ -246,6 +262,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Almindelige supermarkeder", en: "Regular supermarkets" },
       { da: "Helsekostbutikker", en: "Health food stores" },
     ],
+    greenlistTag: "kokos",
   },
   {
     id: "garam-masala",
@@ -272,6 +289,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Krydderihylden i de fleste supermarkeder", en: "The spice aisle of most supermarkets" },
       { da: "Indiske/asiatiske specialbutikker", en: "Indian/Asian grocery stores" },
     ],
+    greenlistTag: "krydderi",
   },
   {
     id: "ground-coriander",
@@ -298,6 +316,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Krydderihylden i de fleste supermarkeder", en: "The spice aisle of most supermarkets" },
       { da: "Indiske/asiatiske specialbutikker (billigere i store poser)", en: "Indian/Asian grocery stores (cheaper in bulk bags)" },
     ],
+    greenlistTag: "krydderi",
   },
   {
     id: "black-mustard-seeds",
@@ -324,6 +343,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Indiske/asiatiske specialbutikker", en: "Indian/Asian grocery stores" },
       { da: "Krydderihylden i nogle supermarkeder", en: "The spice aisle of some supermarkets" },
     ],
+    greenlistTag: "krydderi",
   },
   {
     id: "nutritional-yeast",
@@ -353,6 +373,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Helsekostbutikker", en: "Health food stores" },
       { da: "Den veganske hylde i de fleste større supermarkeder", en: "The vegan aisle of most larger supermarkets" },
     ],
+    greenlistTag: "gaerflager",
   },
   {
     id: "chili-powder",
@@ -379,6 +400,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Krydderihylden i de fleste supermarkeder", en: "The spice aisle of most supermarkets" },
       { da: "Indiske/asiatiske specialbutikker", en: "Indian/Asian grocery stores" },
     ],
+    greenlistTag: "chili",
   },
   {
     id: "firm-tofu",
@@ -404,6 +426,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Almindelige supermarkeder (køleafdelingen)", en: "Regular supermarkets (chilled aisle)" },
       { da: "Asiatiske specialbutikker (flere typer og bedre priser)", en: "Asian grocery stores (more varieties, better prices)" },
     ],
+    greenlistTag: "tofu",
   },
   {
     id: "fresh-spinach",
@@ -503,6 +526,7 @@ export const ingredientProfiles: IngredientProfile[] = [
     whereToBuy: [
       { da: "Dåsevarehylden i alle supermarkeder", en: "The canned goods aisle of every supermarket" },
     ],
+    greenlistTag: "tomater",
   },
   {
     id: "likemeat-chicken-bites",
@@ -536,6 +560,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Bilka", en: "Bilka" },
       { da: "Føtex", en: "Føtex" },
     ],
+    greenlistTag: "kylling",
   },
   {
     id: "naturli-vegan-butter",
@@ -556,6 +581,7 @@ export const ingredientProfiles: IngredientProfile[] = [
       { da: "Føtex", en: "Føtex" },
       { da: "Bilka", en: "Bilka" },
     ],
+    greenlistTag: "smoer",
   },
 ];
 
