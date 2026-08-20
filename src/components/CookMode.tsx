@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRecipe } from "@/lib/hooks";
-import { markCooked, saveStepNote, ingredientKey } from "@/lib/db";
+import { markCooked, saveStepNote, saveIngredientNote, ingredientKey } from "@/lib/db";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { formatClock, useRecipeTimers } from "@/lib/use-timers";
 import { useLocale } from "@/lib/use-locale";
@@ -14,6 +14,11 @@ export function CookMode({ id }: { id: string }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [finished, setFinished] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
+  const [openIngredient, setOpenIngredient] = useState<{
+    key: string;
+    label: string;
+    ingredientId?: string;
+  } | null>(null);
 
   // Keep the screen from locking mid-instruction — the point of this whole screen.
   useWakeLock();
@@ -44,6 +49,7 @@ export function CookMode({ id }: { id: string }) {
     setStepIndex(0);
     setFinished(false);
     setNoteOpen(false);
+    setOpenIngredient(null);
   }
 
   if (state.status === "loading") {
@@ -122,11 +128,18 @@ export function CookMode({ id }: { id: string }) {
           <ul className="cook-mode__ingredients">
             {stepIngredients.map((ing) => {
               const key = ingredientKey(ing);
+              const label = ing.text[locale];
               const amount = recipe.ingredientNotes?.[key]?.amount;
               return (
-                <li key={key} className="cook-mode__ingredient-chip">
-                  {ing.text[locale]}
-                  {amount && <span className="cook-mode__ingredient-chip-amount">{amount}</span>}
+                <li key={key}>
+                  <button
+                    type="button"
+                    className="cook-mode__ingredient-chip"
+                    onClick={() => setOpenIngredient({ key, label, ingredientId: ing.ingredientId })}
+                  >
+                    {label}
+                    {amount && <span className="cook-mode__ingredient-chip-amount">{amount}</span>}
+                  </button>
                 </li>
               );
             })}
@@ -211,6 +224,20 @@ export function CookMode({ id }: { id: string }) {
             saveStepNote(recipe.id, currentStep.order, note).then(refresh);
           }}
           onClose={() => setNoteOpen(false)}
+        />
+      )}
+
+      {openIngredient && (
+        <NoteSheet
+          title={t.notes.ingredientTitle(openIngredient.label)}
+          ingredientId={openIngredient.ingredientId}
+          showAmount
+          initialNote={recipe.ingredientNotes?.[openIngredient.key]?.note ?? ""}
+          initialAmount={recipe.ingredientNotes?.[openIngredient.key]?.amount ?? ""}
+          onSave={({ note, amount }) => {
+            saveIngredientNote(recipe.id, openIngredient.key, { note, amount }).then(refresh);
+          }}
+          onClose={() => setOpenIngredient(null)}
         />
       )}
 

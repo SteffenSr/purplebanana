@@ -12,6 +12,7 @@ import { useLocale } from "@/lib/use-locale";
 export function NoteSheet({
   title,
   showAmount = false,
+  ingredientId,
   initialNote = "",
   initialAmount = "",
   onSave,
@@ -19,6 +20,8 @@ export function NoteSheet({
 }: {
   title: string;
   showAmount?: boolean;
+  /** When set (ingredient sheets only), shows a button to that ingredient's full details page. */
+  ingredientId?: string;
   initialNote?: string;
   initialAmount?: string;
   onSave: (data: { note: string; amount: string }) => void;
@@ -38,6 +41,15 @@ export function NoteSheet({
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="note-sheet__title">{title}</h2>
+
+        {ingredientId && (
+          // Plain <a>: a full document navigation to the ingredient's
+          // details page, same reasoning as every other internal link in
+          // this app — see RecipeCard.tsx.
+          <a href={`/ingredients/${ingredientId}/`} className="btn btn-secondary btn-block">
+            ℹ️ {t.notes.ingredientInfo}
+          </a>
+        )}
 
         {showAmount && (
           <label className="field">

@@ -8,7 +8,7 @@ import { NoteSheet } from "./NoteSheet";
 
 type OpenSheet =
   | { kind: "step"; order: number }
-  | { kind: "ingredient"; key: string; label: string };
+  | { kind: "ingredient"; key: string; label: string; ingredientId?: string };
 
 export function RecipeDetail({ id }: { id: string }) {
   const { state, refresh } = useRecipe(id);
@@ -101,7 +101,9 @@ export function RecipeDetail({ id }: { id: string }) {
               <button
                 type="button"
                 className="ingredient-list__button"
-                onClick={() => setOpenSheet({ kind: "ingredient", key, label })}
+                onClick={() =>
+                  setOpenSheet({ kind: "ingredient", key, label, ingredientId: ingredient.ingredientId })
+                }
               >
                 <span>{label}</span>
                 {ingredientNote?.amount && (
@@ -153,6 +155,7 @@ export function RecipeDetail({ id }: { id: string }) {
       {openSheet?.kind === "ingredient" && (
         <NoteSheet
           title={t.notes.ingredientTitle(openSheet.label)}
+          ingredientId={openSheet.ingredientId}
           showAmount
           initialNote={recipe.ingredientNotes?.[openSheet.key]?.note ?? ""}
           initialAmount={recipe.ingredientNotes?.[openSheet.key]?.amount ?? ""}
