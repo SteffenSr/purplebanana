@@ -78,6 +78,7 @@ export interface Dictionary {
     fat: (n: number) => string;
     fiber: (n: number) => string;
     whereToBuy: string;
+    viewOnGreenlist: string;
   };
   experiments: {
     openLabel: string;
@@ -172,6 +173,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       fat: (n) => `${n} g fedt`,
       fiber: (n) => `${n} g kostfibre`,
       whereToBuy: "Hvor du kan købe det",
+      viewOnGreenlist: "Se lignende produkter på Greenlist.dk",
     },
     experiments: {
       openLabel: "Eksperimenter",
@@ -286,6 +288,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       fat: (n) => `${n} g fat`,
       fiber: (n) => `${n} g fiber`,
       whereToBuy: "Where to buy it",
+      viewOnGreenlist: "See similar products on Greenlist.dk",
     },
     experiments: {
       openLabel: "Experiments",
