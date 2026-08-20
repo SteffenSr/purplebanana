@@ -880,6 +880,61 @@ button {
 }
 
 /* ---------------------------------------------------------------------
+   Experiments hub (developer feature — jump to in-progress screens)
+   --------------------------------------------------------------------- */
+.experiment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--space-4);
+}
+
+.experiment-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  color: inherit;
+}
+
+.experiment-card__emoji {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.experiment-card__title {
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+}
+
+.experiment-card__description {
+  color: var(--color-text-muted);
+}
+
+.experiment-landing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.experiment-landing__emoji {
+  font-size: 4rem;
+}
+
+.experiment-landing__note {
+  padding: var(--space-3);
+  background: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------------
    Utility
    --------------------------------------------------------------------- */
 .text-muted {
