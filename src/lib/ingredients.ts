@@ -2,17 +2,41 @@ import type { IngredientProfile } from "./types";
 
 /**
  * Bundled ingredient reference data — one entry per ingredient that's worth
- * a details page: distinctive spices and dal staples, plus any ingredient
- * recurring across three or more recipes (that's the line "onion" and
- * "canned tomatoes" cross but "salt", "water", and one-off items don't).
+ * a details page:
+ *   - distinctive spices and dal staples,
+ *   - any ingredient recurring across three or more recipes ("onion" and
+ *     "canned tomatoes" cross that line; "salt", "water", and one-off items
+ *     don't),
+ *   - and branded specialty products (vegan meat/dairy substitutes, etc.)
+ *     that an average shopper wouldn't know where to find, however few
+ *     recipes use them.
  * Referenced from `seed-recipes.ts` via `Ingredient.ingredientId` and
  * rendered at `/ingredients/<id>`. Static content, like `seed-recipes.ts`
  * itself — not stored in IndexedDB, nothing here is user-editable.
  *
- * Nutrition figures are typical values per the stated basis (usually per
- * 100 g of the raw/dry ingredient), meant to give a general sense rather
- * than lab-precise numbers — see each entry's `nutrition.note` for spices
- * where a 100 g basis is misleading (they're eaten in pinches).
+ * Nutrition figures for generic ingredients are typical values per the
+ * stated basis (usually per 100 g of the raw/dry ingredient), meant to give
+ * a general sense rather than lab-precise numbers — see each entry's
+ * `nutrition.note` for spices where a 100 g basis is misleading (they're
+ * eaten in pinches). `nutrition` is omitted entirely where no real figure
+ * is available (some branded products, see below).
+ *
+ * Branded-product entries (currently "likemeat-chicken-bites" and
+ * "naturli-vegan-butter") source their `whereToBuy` stores, allergens (folded
+ * into `flavorAndRole`), and any `nutrition` from the Green List vegan
+ * product database (https://api.greenlist.dk, OpenAPI spec at
+ * /openapi/public.json) — a Danish public API of vegan products, their
+ * ingredients, and which stores carry them. That lookup happened once, at
+ * authoring time, the same way a human would look up a fact before writing
+ * it down; there is no runtime call to that API anywhere in this app. This
+ * app has no server and must work fully offline (see AGENTS.md and
+ * docs/architecture.md), so wiring a live fetch to an external API at
+ * runtime was never on the table — it would silently break on a cold or
+ * offline load exactly like the un-precached-page bug the SW precache
+ * script exists to prevent. Store availability isn't static, though: if
+ * these products stop showing up in the field, re-query the API (see the
+ * `products/{slug}` endpoint, e.g. `like-meat-like-chicken-bites` and
+ * `block`) and update `whereToBuy` by hand.
  */
 export const ingredientProfiles: IngredientProfile[] = [
   {
@@ -478,6 +502,59 @@ export const ingredientProfiles: IngredientProfile[] = [
     },
     whereToBuy: [
       { da: "Dåsevarehylden i alle supermarkeder", en: "The canned goods aisle of every supermarket" },
+    ],
+  },
+  {
+    id: "likemeat-chicken-bites",
+    name: { da: "LikeMeat Chicken Bites", en: "LikeMeat Chicken Bites" },
+    otherNames: [
+      { da: "Like Chicken Bites — Like Meats officielle varenavn", en: "Like Chicken Bites — Like Meat's official product name" },
+      { da: "Kyllingestykker af soja (kødalternativ)", en: "Soy-based chicken-style pieces (meat alternative)" },
+    ],
+    emoji: "🍗",
+    flavorAndRole: {
+      da: "Et sojabaseret kødalternativ formet som små, bidstore stykker med en fiberet, let sej konsistens, der minder om stegte kyllingestykker. Smagen i sig selv er ret neutral, så stykkerne trækker godt smag fra en marinade — som i denne opskrift, hvor de trækker natten over i tandoori-krydret yoghurt, før de simrer med i saucen. Bruges til at give en ret bid og protein, hvor en kødret traditionelt ville have kylling. Indeholder soja.",
+      en: "A soy-based meat alternative shaped into small, bite-sized pieces with a fibrous, slightly chewy texture reminiscent of pan-fried chicken. The pieces themselves taste fairly neutral, so they take on a marinade well — as in this recipe, where they sit overnight in tandoori-spiced yogurt before simmering into the sauce. Used to add bite and protein where a meat-based version of a dish would use chicken. Contains soy.",
+    },
+    nutrition: {
+      per: { da: "Pr. 100 g (producentens varedeklaration)", en: "Per 100 g (manufacturer's declaration)" },
+      calories: 103,
+      proteinG: 19,
+      carbsG: 0,
+      fatG: 1.8,
+      fiberG: 6.5,
+      note: {
+        da: "Kilde: Green List-produktdatabasen (greenlist.dk) — tjek altid emballagen, da producenter opdaterer opskrifter.",
+        en: "Source: the Green List product database (greenlist.dk) — always check the pack, since manufacturers do update recipes.",
+      },
+    },
+    whereToBuy: [
+      {
+        da: "Ikke en fast hylde i de fleste supermarkeder — tjek køleafdelingen for kødalternativer",
+        en: "Not a given at most supermarkets — check the chilled meat-alternative aisle",
+      },
+      { da: "Bilka", en: "Bilka" },
+      { da: "Føtex", en: "Føtex" },
+    ],
+  },
+  {
+    id: "naturli-vegan-butter",
+    name: { da: "Naturli' Smørbar", en: "Naturli' vegan butter" },
+    otherNames: [
+      { da: "Block (Smørbar) — officielt produktnavn", en: "Block (Smørbar) — official product name" },
+      { da: "Vegansk smørerstatning", en: "Vegan butter alternative" },
+    ],
+    emoji: "🧈",
+    flavorAndRole: {
+      da: "Fast og smørbar ved køleskabstemperatur, lavet af sheaolie, kokosolie og rapsolie i stedet for mælkefedt — den smelter og opfører sig i gryden nogenlunde som rigtigt smør. Bruges 1:1 i stedet for smør til at give en sauce en rund, fyldig eftersmag, som i denne opskrift, hvor den røres i mod slutningen for at give saucen dens silkede konsistens. Indeholder mandelsmør blandt olierne — værd at vide, hvis nøddeallergi er relevant i din husstand.",
+      en: "Firm and spreadable at fridge temperature, made from shea, coconut, and rapeseed oils instead of milkfat — it melts and behaves in a pot much like real butter. Used 1:1 in place of butter to give a sauce a round, rich finish, as in this recipe, where it's stirred in near the end for the sauce's silky texture. Contains almond butter among its oils — worth knowing if tree-nut allergies matter in your kitchen.",
+    },
+    whereToBuy: [
+      { da: "Køledisken i de fleste større supermarkeder", en: "The chilled aisle of most larger supermarkets" },
+      { da: "Nemlig", en: "Nemlig" },
+      { da: "Netto", en: "Netto" },
+      { da: "Føtex", en: "Føtex" },
+      { da: "Bilka", en: "Bilka" },
     ],
   },
 ];

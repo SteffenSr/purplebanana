@@ -52,8 +52,9 @@ export interface IngredientProfile {
   images?: string[];
   /** What it tastes/feels like, and what role it typically plays in a recipe. */
   flavorAndRole: LocalizedText;
-  nutrition: IngredientNutrition;
-  /** Places to buy it, e.g. "Indian/Asian grocery stores". */
+  /** Omitted when no manufacturer nutrition declaration is available (e.g. some branded products). */
+  nutrition?: IngredientNutrition;
+  /** Places to buy it, e.g. "Indian/Asian grocery stores", or specific store names for a branded product. */
   whereToBuy: LocalizedText[];
 }
 

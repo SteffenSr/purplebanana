@@ -71,16 +71,22 @@ export function IngredientDetail({ id }: { id: string }) {
       <h2 className="section-title">{t.ingredientDetail.flavorAndRole}</h2>
       <p>{ingredient.flavorAndRole[locale]}</p>
 
-      <h2 className="section-title">{t.ingredientDetail.nutrition}</h2>
-      <p className="text-muted">{nutrition.per[locale]}</p>
-      <div className="badge-row">
-        <span className="badge">{t.ingredientDetail.calories(nutrition.calories)}</span>
-        <span className="badge">{t.ingredientDetail.protein(nutrition.proteinG)}</span>
-        <span className="badge">{t.ingredientDetail.carbs(nutrition.carbsG)}</span>
-        <span className="badge">{t.ingredientDetail.fat(nutrition.fatG)}</span>
-        {nutrition.fiberG != null && <span className="badge">{t.ingredientDetail.fiber(nutrition.fiberG)}</span>}
-      </div>
-      {nutrition.note && <p className="text-muted">{nutrition.note[locale]}</p>}
+      {nutrition && (
+        <>
+          <h2 className="section-title">{t.ingredientDetail.nutrition}</h2>
+          <p className="text-muted">{nutrition.per[locale]}</p>
+          <div className="badge-row">
+            <span className="badge">{t.ingredientDetail.calories(nutrition.calories)}</span>
+            <span className="badge">{t.ingredientDetail.protein(nutrition.proteinG)}</span>
+            <span className="badge">{t.ingredientDetail.carbs(nutrition.carbsG)}</span>
+            <span className="badge">{t.ingredientDetail.fat(nutrition.fatG)}</span>
+            {nutrition.fiberG != null && (
+              <span className="badge">{t.ingredientDetail.fiber(nutrition.fiberG)}</span>
+            )}
+          </div>
+          {nutrition.note && <p className="text-muted">{nutrition.note[locale]}</p>}
+        </>
+      )}
 
       <h2 className="section-title">{t.ingredientDetail.whereToBuy}</h2>
       <ul className="ingredient-buy-list">

@@ -678,6 +678,7 @@ export const seedRecipes: Recipe[] = [
           da: "2 pakker LikeMeat Chicken Bites, optøede",
           en: "2 packages LikeMeat Chicken Bites, thawed",
         },
+        ingredientId: "likemeat-chicken-bites",
       },
       { text: { da: "2 dl planteyoghurt", en: "3/4 cup plant yogurt" } },
       { text: { da: "1 spsk tandoori-krydderi", en: "1 tbsp tandoori spice blend" } },
@@ -705,7 +706,10 @@ export const seedRecipes: Recipe[] = [
         },
         ingredientId: "kasuri-methi",
       },
-      { text: { da: "3 spsk Naturli' Smørbar", en: "3 tbsp Naturli' vegan butter" } },
+      {
+        text: { da: "3 spsk Naturli' Smørbar", en: "3 tbsp Naturli' vegan butter" },
+        ingredientId: "naturli-vegan-butter",
+      },
       { text: { da: "2 dl plantefløde", en: "3/4 cup plant-based cream" } },
       { text: { da: "Salt, efter smag", en: "Salt, to taste" } },
     ],
@@ -823,6 +827,6 @@ export const seedRecipes: Recipe[] = [
         },
       },
     ],
-    updatedAt: "2026-08-19T13:00:00.000Z",
+    updatedAt: "2026-08-19T14:00:00.000Z",
   },
 ];
