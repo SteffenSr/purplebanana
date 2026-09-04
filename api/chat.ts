@@ -17,17 +17,23 @@ import type { AgentInputItem } from "@openai/agents";
  * fetch(request) {...} }`), the shape Vercel's own current docs show for a
  * root-level /api file — not the older Node `(req, res)` signature.
  *
- * The .mts extension (not .ts) is load-bearing, not cosmetic: Vercel reads
+ * package.json's root-level "type": "module" is load-bearing, not
+ * cosmetic — it's why this file compiles and loads at all. Vercel reads
  * this project's root tsconfig.json to compile files under /api, and that
- * tsconfig sets "module": "esnext" for the Next.js app's own bundler. On a
- * plain .ts file that left a literal `export default ...` in the compiled
- * api/chat.js, which Node then tried to require() as CommonJS (no "type":
- * "module" in package.json) and crashed with FUNCTION_INVOCATION_FAILED on
- * every invocation, before any of this file's own code ran — the handler
- * shape was a red herring. .mts always compiles/loads as an ES module by
- * extension, regardless of package.json or tsconfig, which fixes it
- * without touching the shared root tsconfig. See docs/architecture.md's
- * "Recipe chatbot (Nomi) backend" section for the full story.
+ * tsconfig sets "module": "esnext" for the Next.js app's own bundler.
+ * Applied to this file too, that leaves a literal `export default ...` in
+ * the compiled api/chat.js; without "type": "module", Node treats a plain
+ * .js as CommonJS and its require() chokes on that syntax with
+ * SyntaxError: Unexpected token 'export' — surfacing on Vercel as
+ * FUNCTION_INVOCATION_FAILED on every invocation, before any of this
+ * file's own code runs. (Renaming the source file to .mts was tried
+ * first, since Node always treats .mjs/.mts-derived output as ESM by
+ * extension regardless of package.json/tsconfig — but Vercel's /api
+ * function detection for this project doesn't recognize .mts as a
+ * function source file at all, so the route 404'd outright instead of
+ * building. "type": "module" was the fix that actually worked.) See
+ * docs/architecture.md's "Recipe chatbot (Nomi) backend" section for the
+ * full story, including why the handler shape above was a red herring.
  *
  * Until OPENAI_API_KEY is configured (Vercel project env var), this
  * returns canned mock replies so the chat UI is fully exercisable without

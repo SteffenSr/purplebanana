@@ -274,7 +274,7 @@ backend (see "Why static export + IndexedDB" above), and it shouldn't run
 client-side even if it technically could, since that would mean shipping
 an API key to the browser.
 
-That's why the endpoint (`api/chat.mts`) lives in a top-level `/api`
+That's why the endpoint (`api/chat.ts`) lives in a top-level `/api`
 directory instead of a Next.js route handler under `src/app/api`. With
 `output: "export"`, Next.js route handlers must themselves be statically
 exportable — they can't run arbitrary server code per request — so they
@@ -282,13 +282,13 @@ can't do this job. `/api/*.ts` at the repo root is a separate Vercel
 convention ("Vercel Functions"): Vercel deploys any file there as its own
 Node serverless function regardless of the framework preset, alongside
 whatever static site the framework build produces. The static export in
-`out/` and the function in `api/chat.mts` deploy together under the same
+`out/` and the function in `api/chat.ts` deploy together under the same
 Vercel project and the same domain, so the client can `fetch("/api/chat")`
 same-origin with no CORS configuration — but the function itself isn't
 part of the `next build` / static export at all, and doesn't run locally
 under `next dev` (only on Vercel, or under `vercel dev`).
 
-`api/chat.mts` uses the [OpenAI Agents SDK](https://www.npmjs.com/package/@openai/agents)
+`api/chat.ts` uses the [OpenAI Agents SDK](https://www.npmjs.com/package/@openai/agents)
 to run a single `Agent` named Nomi. It only does that when an
 `OPENAI_API_KEY` environment variable is set on the Vercel project (see
 `.env.example`); without one, it returns a small set of canned mock
@@ -298,9 +298,9 @@ sends the running message history and current locale on every request —
 there's no server-side session, matching the "no state on the server"
 posture the rest of the app already takes for granted.
 
-**The source file must be `api/chat.mts`, not `api/chat.ts`.** This one
-cost two rounds to actually pin down, because the wrong theory looked
-right for a while:
+**The root `package.json` needs `"type": "module"`.** This one cost three
+rounds to actually pin down, because two reasonable-looking theories
+turned out to be wrong:
 
 - *Round 1 — looked like a handler-shape problem.* `api/chat.ts` originally
   exported the older Node-style default function (`export default function
@@ -329,20 +329,30 @@ right for a while:
   setting tells the compiler to leave `import`/`export` syntax untouched
   rather than lowering it to CommonJS, so the emitted `api/chat.js` still
   contained a literal `export default ...` statement — and Node's module
-  loader treats a plain `.js` file as CommonJS by default (this project's
-  `package.json` has no `"type": "module"`), so it tried to `require()`
-  that ESM syntax and threw a `SyntaxError` before either handler shape
-  above ever ran. That explains why the handler-shape rewrite didn't help:
-  it was never the export *shape* Node choked on, it was the raw `export`
-  keyword itself.
+  loader treats a plain `.js` file as CommonJS by default, so it tried to
+  `require()` that ESM syntax and threw a `SyntaxError` before either
+  handler shape above ever ran. That explains why the handler-shape
+  rewrite didn't help: it was never the export *shape* Node choked on, it
+  was the raw `export` keyword itself.
+- *Round 3 — the `.mts` attempt.* Node always treats a `.mjs`/`.mts`-derived
+  output as an ES module by extension, regardless of `package.json`'s
+  `"type"` field or any tsconfig `"module"` setting, so renaming the
+  source file to `api/chat.mts` looked like a fix scoped to just this one
+  file, leaving the shared root `tsconfig.json` (which the Next.js build
+  genuinely needs as `"module": "esnext"`) untouched. It compiled, but
+  Vercel's `/api` function detection for this project doesn't recognize a
+  `.mts` source file as a function at all — the route **404'd** outright
+  (`x-matched-path: /404`) instead of building, which is a worse failure
+  mode than the crash it was meant to fix.
 
-  The fix is `api/chat.mts` instead of `api/chat.ts`: Node always treats a
-  `.mjs`/`.mts`-derived output as an ES module, by extension, regardless
-  of `package.json`'s `"type"` field or any tsconfig `"module"` setting —
-  so this is fixed per-file without touching the shared root
-  `tsconfig.json` (which the Next.js build genuinely needs as-is) or
-  adding a project-wide `"type": "module"` that could have ripple effects
-  on other tooling.
+  The fix that actually worked: revert to `api/chat.ts`, and add `"type":
+  "module"` to the root `package.json` — exactly what Node's own warning
+  in Round 2 suggested from the start. It's a project-wide setting, but a
+  low-risk one here: nothing else at the repo root is a plain `.js`/`.cjs`
+  file relying on being loaded as CommonJS (`scripts/generate-sw-precache.mjs`
+  and `eslint.config.mjs` are already explicitly `.mjs`, unaffected either
+  way; `next.config.ts` and `tsconfig.json` aren't loaded via Node's own
+  CommonJS resolution at all).
 
 **`next.config.ts`'s `trailingSlash: true` applies to this function too,**
 not just Next's own pages — a `POST /api/chat` gets a `308` redirect to
