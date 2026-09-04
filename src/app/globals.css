@@ -640,15 +640,22 @@ button {
 .cook-mode__top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: var(--space-3) var(--space-4);
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
   border-bottom: 1px solid var(--color-border);
+  flex: 0 0 auto;
+}
+
+.cook-mode__top .btn-icon {
+  min-height: 2.5rem;
+  min-width: 2.5rem;
+  padding: 0.4rem;
+  font-size: var(--font-size-base);
 }
 
 .cook-mode__progress {
   flex: 1;
-  margin: 0 var(--space-4);
-  height: 0.6rem;
+  height: 0.3rem;
   background: var(--color-border);
   border-radius: 999px;
   overflow: hidden;
@@ -658,6 +665,21 @@ button {
   height: 100%;
   background: var(--color-primary);
   transition: width 0.2s ease;
+}
+
+.cook-mode__count {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.cook-mode__timer-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  flex: 0 0 auto;
 }
 
 .cook-mode__body {
@@ -672,12 +694,115 @@ button {
   overflow-y: auto;
 }
 
+/* The scroll-snapping list of steps that replaces the old back/next nav:
+   one step fills the screen at a time, with the next step's opening lines
+   peeking (dimmed) at the bottom as a scroll target. */
+.cook-mode__steps {
+  flex: 1;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cook-mode__step {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: calc(100% - clamp(7rem, 20vh, 11rem));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Top-anchored, not centered: content starts right at the top of the
+     step's box so that the box's own leftover space — not blank
+     background — is what peeks in below as the next step's opener. */
+  justify-content: flex-start;
+  text-align: center;
+  padding: var(--space-5) var(--space-4);
+  gap: var(--space-4);
+  opacity: 0.35;
+  transition: opacity 0.25s ease;
+}
+
+.cook-mode__step.is-active {
+  opacity: 1;
+}
+
+.cook-mode__step--finish {
+  min-height: 100%;
+  justify-content: center;
+}
+
+.cook-mode__step-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 40rem;
+}
+
 .cook-mode__step-label {
   font-size: var(--font-size-lg);
   font-weight: 800;
   color: var(--color-primary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.cook-mode__step-head-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cook-mode__note-btn {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0.5rem;
+  border-radius: 999px;
+  border: 2px dashed var(--color-border);
+  background: none;
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.cook-mode__note-btn--filled {
+  border-style: solid;
+  border-color: var(--color-accent);
+  background: rgba(245, 197, 24, 0.18);
+}
+
+/* Just the number of minutes until tapped; tapping starts it counting
+   down in place, and tapping again (running or expired) cancels it —
+   no separate start/cancel affordance. */
+.cook-mode__timer-btn {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0.5rem;
+  border-radius: 999px;
+  border: 2px dashed var(--color-border);
+  background: none;
+  color: inherit;
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.cook-mode__timer-btn--running {
+  border-style: solid;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.cook-mode__timer-btn--expired {
+  border-style: solid;
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: var(--color-primary-contrast);
+  animation: timer-alarm-pulse 1s ease-in-out infinite;
 }
 
 .cook-mode__step-text {
@@ -723,44 +848,6 @@ button {
   white-space: nowrap;
 }
 
-.cook-mode__timer {
-  font-size: var(--font-size-xl);
-  font-weight: 800;
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-5);
-  min-height: var(--tap-min);
-}
-
-.cook-mode__timer-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.cook-mode__timer--expired {
-  background: var(--color-danger);
-  color: var(--color-primary-contrast);
-  animation: timer-alarm-pulse 1s ease-in-out infinite;
-}
-
-.cook-mode__timer-cancel {
-  font-size: var(--font-size-base);
-  color: var(--color-text-muted);
-  text-decoration: underline;
-  min-height: var(--tap-min);
-  padding: 0 var(--space-2);
-}
-
-.cook-mode__other-timers {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--space-2);
-}
-
 .cook-mode__other-timer {
   font-size: var(--font-size-base);
   font-weight: 700;
@@ -775,42 +862,6 @@ button {
   background: var(--color-danger);
   color: var(--color-primary-contrast);
   border-color: var(--color-danger);
-}
-
-.cook-mode__note {
-  display: block;
-  width: 100%;
-  max-width: 32rem;
-  font-size: var(--font-size-base);
-  font-weight: 600;
-  border-radius: var(--radius);
-  padding: var(--space-3);
-  text-align: left;
-  border: 2px dashed var(--color-border);
-  background: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  min-height: var(--tap-min);
-}
-
-.cook-mode__note--filled {
-  border-style: solid;
-  border-color: var(--color-accent);
-  background: rgba(245, 197, 24, 0.18);
-  color: var(--color-text);
-  font-weight: 500;
-}
-
-.cook-mode__nav {
-  display: flex;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border-top: 1px solid var(--color-border);
-}
-
-.cook-mode__nav .btn {
-  flex: 1;
-  font-size: var(--font-size-xl);
 }
 
 .cook-mode__done {
