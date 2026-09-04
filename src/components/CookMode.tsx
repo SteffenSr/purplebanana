@@ -291,14 +291,36 @@ function StepPanel({
     >
       <div className="cook-mode__step-head">
         <span className="cook-mode__step-label">{t.cookMode.step(step.order)}</span>
-        <button
-          type="button"
-          className={"cook-mode__note-btn" + (stepNote ? " cook-mode__note-btn--filled" : "")}
-          onClick={onOpenNote}
-          aria-label={t.notes.stepTitle(step.order)}
-        >
-          {stepNote ? "📝" : "🗒️"}
-        </button>
+        <div className="cook-mode__step-head-actions">
+          {step.timerMinutes && (
+            <button
+              type="button"
+              className={
+                "cook-mode__timer-btn" +
+                (timer?.running ? " cook-mode__timer-btn--running" : "") +
+                (timer?.expired ? " cook-mode__timer-btn--expired" : "")
+              }
+              onClick={timer ? onDismissTimer : onStartTimer}
+              aria-label={
+                timer?.expired
+                  ? t.cookMode.timerDone
+                  : timer?.running
+                    ? t.cookMode.cancelTimer
+                    : t.cookMode.startTimer(step.timerMinutes)
+              }
+            >
+              {timer ? formatClock(timer.secondsLeft) : step.timerMinutes}
+            </button>
+          )}
+          <button
+            type="button"
+            className={"cook-mode__note-btn" + (stepNote ? " cook-mode__note-btn--filled" : "")}
+            onClick={onOpenNote}
+            aria-label={t.notes.stepTitle(step.order)}
+          >
+            {stepNote ? "📝" : "🗒️"}
+          </button>
+        </div>
       </div>
 
       <p className="cook-mode__step-text">{step.instruction[locale]}</p>
@@ -323,27 +345,6 @@ function StepPanel({
             );
           })}
         </ul>
-      )}
-
-      {step.timerMinutes && !timer && (
-        <button type="button" className="cook-mode__timer" onClick={onStartTimer}>
-          {t.cookMode.startTimer(step.timerMinutes)}
-        </button>
-      )}
-
-      {timer?.running && (
-        <div className="cook-mode__timer-group">
-          <span className="cook-mode__timer cook-mode__timer--running">{formatClock(timer.secondsLeft)}</span>
-          <button type="button" className="cook-mode__timer-cancel" onClick={onDismissTimer}>
-            {t.cookMode.cancelTimer}
-          </button>
-        </div>
-      )}
-
-      {timer?.expired && (
-        <button type="button" className="cook-mode__timer cook-mode__timer--expired" onClick={onDismissTimer}>
-          {t.cookMode.timerDone}
-        </button>
       )}
     </div>
   );

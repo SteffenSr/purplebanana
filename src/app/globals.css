@@ -748,8 +748,14 @@ button {
   letter-spacing: 0.06em;
 }
 
-.cook-mode__note-btn {
+.cook-mode__step-head-actions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cook-mode__note-btn {
   min-width: var(--tap-min);
   min-height: var(--tap-min);
   padding: 0.5rem;
@@ -765,6 +771,38 @@ button {
   border-style: solid;
   border-color: var(--color-accent);
   background: rgba(245, 197, 24, 0.18);
+}
+
+/* Just the number of minutes until tapped; tapping starts it counting
+   down in place, and tapping again (running or expired) cancels it —
+   no separate start/cancel affordance. */
+.cook-mode__timer-btn {
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 0.5rem;
+  border-radius: 999px;
+  border: 2px dashed var(--color-border);
+  background: none;
+  color: inherit;
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.cook-mode__timer-btn--running {
+  border-style: solid;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.cook-mode__timer-btn--expired {
+  border-style: solid;
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: var(--color-primary-contrast);
+  animation: timer-alarm-pulse 1s ease-in-out infinite;
 }
 
 .cook-mode__step-text {
@@ -808,37 +846,6 @@ button {
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
   white-space: nowrap;
-}
-
-.cook-mode__timer {
-  font-size: var(--font-size-xl);
-  font-weight: 800;
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-5);
-  min-height: var(--tap-min);
-}
-
-.cook-mode__timer-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.cook-mode__timer--expired {
-  background: var(--color-danger);
-  color: var(--color-primary-contrast);
-  animation: timer-alarm-pulse 1s ease-in-out infinite;
-}
-
-.cook-mode__timer-cancel {
-  font-size: var(--font-size-base);
-  color: var(--color-text-muted);
-  text-decoration: underline;
-  min-height: var(--tap-min);
-  padding: 0 var(--space-2);
 }
 
 .cook-mode__other-timer {
