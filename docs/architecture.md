@@ -263,3 +263,37 @@ closes or kills the tab, nothing can wake it to fire an alarm — there's no
 push server to do that from. `endAt` being wall-clock-based means the timer
 is never *wrong* when the page comes back (no server), just possibly
 *late* if the tab was gone for a while.
+
+## Recipe chatbot (Nomi) backend
+
+`src/app/experiments/chatbot` is a full-screen chat UI
+(`src/components/ChatBot.tsx`) for "Nomi", a recipe/nutrition assistant.
+Unlike everything else in this app, answering a chat message genuinely
+needs a server: an LLM call can't happen from a static export with no
+backend (see "Why static export + IndexedDB" above), and it shouldn't run
+client-side even if it technically could, since that would mean shipping
+an API key to the browser.
+
+That's why the endpoint (`api/chat.ts`) lives in a top-level `/api`
+directory instead of a Next.js route handler under `src/app/api`. With
+`output: "export"`, Next.js route handlers must themselves be statically
+exportable — they can't run arbitrary server code per request — so they
+can't do this job. `/api/*.ts` at the repo root is a separate Vercel
+convention ("Vercel Functions"): Vercel deploys any file there as its own
+Node serverless function regardless of the framework preset, alongside
+whatever static site the framework build produces. The static export in
+`out/` and the function in `api/chat.ts` deploy together under the same
+Vercel project and the same domain, so the client can `fetch("/api/chat")`
+same-origin with no CORS configuration — but the function itself isn't
+part of the `next build` / static export at all, and doesn't run locally
+under `next dev` (only on Vercel, or under `vercel dev`).
+
+`api/chat.ts` uses the [OpenAI Agents SDK](https://www.npmjs.com/package/@openai/agents)
+to run a single `Agent` named Nomi. It only does that when an
+`OPENAI_API_KEY` environment variable is set on the Vercel project (see
+`.env.example`); without one, it returns a small set of canned mock
+replies (picked deterministically from the message text, in the request's
+locale) so the chat UI is fully testable before a key exists. The client
+sends the running message history and current locale on every request —
+there's no server-side session, matching the "no state on the server"
+posture the rest of the app already takes for granted.
