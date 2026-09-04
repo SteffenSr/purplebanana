@@ -91,6 +91,15 @@ export interface Dictionary {
       comingSoon: string;
       backToExperiments: string;
     };
+    chatbot: {
+      title: string;
+      close: string;
+      greeting: string;
+      inputPlaceholder: string;
+      send: string;
+      thinking: string;
+      error: string;
+    };
   };
 }
 
@@ -208,6 +217,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
         comingSoon: "Denne funktion er ikke bygget endnu — dette er kun en landingsside til navigationstest.",
         backToExperiments: "← Tilbage til eksperimenter",
       },
+      chatbot: {
+        title: "Nomi",
+        close: "Luk chat",
+        greeting: "Hej, jeg er Nomi! Spørg mig om en opskrift, en ingrediens eller ernæring.",
+        inputPlaceholder: "Skriv en besked til Nomi…",
+        send: "Send",
+        thinking: "Nomi tænker…",
+        error: "Nomi kunne ikke svare lige nu. Prøv igen.",
+      },
     },
   },
   en: {
@@ -322,6 +340,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
       landing: {
         comingSoon: "This feature isn't built yet — this is just a landing page for navigation testing.",
         backToExperiments: "← Back to experiments",
+      },
+      chatbot: {
+        title: "Nomi",
+        close: "Close chat",
+        greeting: "Hi, I'm Nomi! Ask me about a recipe, an ingredient, or nutrition.",
+        inputPlaceholder: "Message Nomi…",
+        send: "Send",
+        thinking: "Nomi is thinking…",
+        error: "Nomi couldn't respond right now. Please try again.",
       },
     },
   },

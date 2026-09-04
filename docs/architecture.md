@@ -263,3 +263,119 @@ closes or kills the tab, nothing can wake it to fire an alarm — there's no
 push server to do that from. `endAt` being wall-clock-based means the timer
 is never *wrong* when the page comes back (no server), just possibly
 *late* if the tab was gone for a while.
+
+## Recipe chatbot (Nomi) backend
+
+`src/app/experiments/chatbot` is a full-screen chat UI
+(`src/components/ChatBot.tsx`) for "Nomi", a recipe/nutrition assistant.
+Unlike everything else in this app, answering a chat message genuinely
+needs a server: an LLM call can't happen from a static export with no
+backend (see "Why static export + IndexedDB" above), and it shouldn't run
+client-side even if it technically could, since that would mean shipping
+an API key to the browser.
+
+That's why the endpoint (`api/chat.ts`) lives in a top-level `/api`
+directory instead of a Next.js route handler under `src/app/api`. With
+`output: "export"`, Next.js route handlers must themselves be statically
+exportable — they can't run arbitrary server code per request — so they
+can't do this job. `/api/*.ts` at the repo root is a separate Vercel
+convention ("Vercel Functions"): Vercel deploys any file there as its own
+Node serverless function regardless of the framework preset, alongside
+whatever static site the framework build produces. The static export in
+`out/` and the function in `api/chat.ts` deploy together under the same
+Vercel project and the same domain, so the client can `fetch("/api/chat")`
+same-origin with no CORS configuration — but the function itself isn't
+part of the `next build` / static export at all, and doesn't run locally
+under `next dev` (only on Vercel, or under `vercel dev`).
+
+`api/chat.ts` uses the [OpenAI Agents SDK](https://www.npmjs.com/package/@openai/agents)
+to run a single `Agent` named Nomi. It only does that when an
+`OPENAI_API_KEY` environment variable is set on the Vercel project (see
+`.env.example`); without one, it returns a small set of canned mock
+replies (picked deterministically from the message text, in the request's
+locale) so the chat UI is fully testable before a key exists. The client
+sends the running message history and current locale on every request —
+there's no server-side session, matching the "no state on the server"
+posture the rest of the app already takes for granted.
+
+**The root `package.json` needs `"type": "module"`.** This one cost three
+rounds to actually pin down, because two reasonable-looking theories
+turned out to be wrong:
+
+- *Round 1 — looked like a handler-shape problem.* `api/chat.ts` originally
+  exported the older Node-style default function (`export default function
+  handler(req: VercelRequest, res: VercelResponse) {...}`, typed via
+  `@vercel/node`) — the same shape Next.js's own `pages/api` used
+  historically. It deployed without error and Vercel's routing matched
+  `/api/chat` correctly (confirmed via the `x-matched-path` response
+  header), but *every* invocation — even a bare `GET` — failed with an
+  opaque `FUNCTION_INVOCATION_FAILED` and no application-level error (our
+  own `try/catch` never ran). That pattern — routes fine, crashes on
+  invocation with nothing from our own code — looked exactly like Vercel's
+  runtime bootstrap calling the export the wrong way, so the fix seemed to
+  be rewriting to the Web-standard `export default { async fetch(request:
+  Request): Promise<Response> {...} }` shape (the shape Vercel's own
+  current docs show for a root-level `/api` file). That rewrite is a
+  genuine improvement — it's the documented convention and it dropped the
+  `@vercel/node` dependency — but redeploying it **failed identically**,
+  which ruled the handler-shape theory out.
+- *Round 2 — the actual cause, from the real function logs*: `Warning:
+  Failed to load the ES module: /var/task/api/chat.js ... SyntaxError:
+  Unexpected token 'export'`. Vercel's Node.js runtime does read this
+  project's root `tsconfig.json` to compile a TypeScript file under
+  `/api` (its own docs say so), and that tsconfig sets `"module":
+  "esnext"` — required for the Next.js app itself to build with
+  Turbopack's bundler resolution. Applied to `api/chat.ts` too, that
+  setting tells the compiler to leave `import`/`export` syntax untouched
+  rather than lowering it to CommonJS, so the emitted `api/chat.js` still
+  contained a literal `export default ...` statement — and Node's module
+  loader treats a plain `.js` file as CommonJS by default, so it tried to
+  `require()` that ESM syntax and threw a `SyntaxError` before either
+  handler shape above ever ran. That explains why the handler-shape
+  rewrite didn't help: it was never the export *shape* Node choked on, it
+  was the raw `export` keyword itself.
+- *Round 3 — the `.mts` attempt.* Node always treats a `.mjs`/`.mts`-derived
+  output as an ES module by extension, regardless of `package.json`'s
+  `"type"` field or any tsconfig `"module"` setting, so renaming the
+  source file to `api/chat.mts` looked like a fix scoped to just this one
+  file, leaving the shared root `tsconfig.json` (which the Next.js build
+  genuinely needs as `"module": "esnext"`) untouched. It compiled, but
+  Vercel's `/api` function detection for this project doesn't recognize a
+  `.mts` source file as a function at all — the route **404'd** outright
+  (`x-matched-path: /404`) instead of building, which is a worse failure
+  mode than the crash it was meant to fix.
+
+  The fix that actually worked: revert to `api/chat.ts`, and add `"type":
+  "module"` to the root `package.json` — exactly what Node's own warning
+  in Round 2 suggested from the start. It's a project-wide setting, but a
+  low-risk one here: nothing else at the repo root is a plain `.js`/`.cjs`
+  file relying on being loaded as CommonJS (`scripts/generate-sw-precache.mjs`
+  and `eslint.config.mjs` are already explicitly `.mjs`, unaffected either
+  way; `next.config.ts` and `tsconfig.json` aren't loaded via Node's own
+  CommonJS resolution at all).
+
+**`next.config.ts`'s `trailingSlash: true` applies to this function too,**
+not just Next's own pages — a `POST /api/chat` gets a `308` redirect to
+`/api/chat/` before it reaches the function at all. `fetch()` follows a
+`308` transparently (it preserves the method and body, unlike `301`/`302`),
+so this isn't actually broken, but `ChatBot.tsx` calls `/api/chat/`
+directly to skip the redirect round trip.
+
+**Preview deployments can sit behind Vercel Deployment Protection
+(SSO)**, which intercepts every request — page and function alike —
+*before* it reaches the app. A protected page load 302s to Vercel's own
+login page (which a real browser follows transparently once you're
+authenticated for the project), but a `fetch()` call made from inside
+already-loaded page JS just gets back a `401 {"error":{"message":"Protected
+deployment"}}` JSON body — which is valid JSON, so it parses fine and
+silently looks like an empty/failed chat reply rather than an obvious
+auth error. This has nothing to do with the app's own code; it's a
+per-project Vercel setting (Project Settings → Deployment Protection).
+[Protection Bypass for
+Automation](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation)
+provides a `VERCEL_AUTOMATION_BYPASS_SECRET` for exactly this case — send
+it as an `x-vercel-protection-bypass` header (or query param), plus
+`x-vercel-set-bypass-cookie: true` once to persist a cookie for a whole
+browser session. It's for testers/CI only and must never be embedded in
+the app's own shipped client code, since that would hand every visitor a
+permanent bypass.
