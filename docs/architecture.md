@@ -289,7 +289,7 @@ part of the `next build` / static export at all, and doesn't run locally
 under `next dev` (only on Vercel, or under `vercel dev`).
 
 `api/chat.ts` uses the [OpenAI Agents SDK](https://www.npmjs.com/package/@openai/agents)
-to run a single `Agent` named Nomi. It only does that when an
+to run a single `Agent` named Nomi on `gpt-5-nano`. It only does that when an
 `OPENAI_API_KEY` environment variable is set on the Vercel project (see
 `.env.example`); without one, it returns a small set of canned mock
 replies (picked deterministically from the message text, in the request's

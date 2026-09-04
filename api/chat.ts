@@ -38,7 +38,7 @@ import type { AgentInputItem } from "@openai/agents";
  * Until OPENAI_API_KEY is configured (Vercel project env var), this
  * returns canned mock replies so the chat UI is fully exercisable without
  * a real model behind it. Once the key is set, requests run through the
- * OpenAI Agents SDK instead — see runAgent() below.
+ * OpenAI Agents SDK instead, using gpt-5-nano — see runAgent() below.
  */
 
 type Role = "user" | "assistant";
@@ -117,6 +117,7 @@ async function runAgent(message: string, history: ChatMessage[]): Promise<string
   const nomi = new Agent({
     name: "Nomi",
     instructions: NOMI_INSTRUCTIONS,
+    model: "gpt-5-nano",
   });
 
   const input = [...history.map(toAgentInputItem), { role: "user" as const, content: message }];
