@@ -297,3 +297,46 @@ locale) so the chat UI is fully testable before a key exists. The client
 sends the running message history and current locale on every request —
 there's no server-side session, matching the "no state on the server"
 posture the rest of the app already takes for granted.
+
+**The handler must use the Web-standard `Request`/`Response` shape, not
+Node's `(req, res)` shape.** `api/chat.ts` originally exported a default
+function of the older Node style (`export default function handler(req:
+VercelRequest, res: VercelResponse) {...}`, typed via the `@vercel/node`
+package) — the same shape Next.js's own `pages/api` used historically.
+That version deployed without error and Vercel's routing matched
+`/api/chat` correctly (confirmed via the `x-matched-path` response
+header), but *every* invocation — even a bare `GET`, before any of the
+handler's own code ran — failed with an opaque `FUNCTION_INVOCATION_FAILED`
+and no application-level error, because the crash was in Vercel's own
+runtime bootstrap trying to invoke the export, not in our code. Rewriting
+the file to `export default { async fetch(request: Request):
+Promise<Response> {...} }` — the shape Vercel's own current docs use for a
+root-level `/api` file — fixed it outright, and dropped the `@vercel/node`
+dependency entirely (it was only ever needed for the old signature's
+types).
+
+**`next.config.ts`'s `trailingSlash: true` applies to this function too,**
+not just Next's own pages — a `POST /api/chat` gets a `308` redirect to
+`/api/chat/` before it reaches the function at all. `fetch()` follows a
+`308` transparently (it preserves the method and body, unlike `301`/`302`),
+so this isn't actually broken, but `ChatBot.tsx` calls `/api/chat/`
+directly to skip the redirect round trip.
+
+**Preview deployments can sit behind Vercel Deployment Protection
+(SSO)**, which intercepts every request — page and function alike —
+*before* it reaches the app. A protected page load 302s to Vercel's own
+login page (which a real browser follows transparently once you're
+authenticated for the project), but a `fetch()` call made from inside
+already-loaded page JS just gets back a `401 {"error":{"message":"Protected
+deployment"}}` JSON body — which is valid JSON, so it parses fine and
+silently looks like an empty/failed chat reply rather than an obvious
+auth error. This has nothing to do with the app's own code; it's a
+per-project Vercel setting (Project Settings → Deployment Protection).
+[Protection Bypass for
+Automation](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/protection-bypass-automation)
+provides a `VERCEL_AUTOMATION_BYPASS_SECRET` for exactly this case — send
+it as an `x-vercel-protection-bypass` header (or query param), plus
+`x-vercel-set-bypass-cookie: true` once to persist a cookie for a whole
+browser session. It's for testers/CI only and must never be embedded in
+the app's own shipped client code, since that would hand every visitor a
+permanent bypass.

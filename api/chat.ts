@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import type { AgentInputItem } from "@openai/agents";
 
 /**
@@ -8,11 +7,20 @@ import type { AgentInputItem } from "@openai/agents";
  * This lives in a top-level /api directory rather than a Next.js route
  * handler because next.config.ts sets output: "export" — the app itself
  * has no server at runtime (see docs/architecture.md). Vercel treats any
- * file under /api as its own standalone serverless function regardless of
+ * file under /api as its own standalone Vercel Function regardless of
  * that, so it deploys alongside the static export on the same domain
  * (same-origin fetch from the client, no CORS setup needed) without
  * requiring the app to give up static export. See docs/architecture.md's
  * "Recipe chatbot (Nomi) backend" section for the full rationale.
+ *
+ * Uses the Web-standard Request/Response handler shape (`export default {
+ * fetch(request) {...} }`), not the older Node `(req, res)` signature —
+ * that older shape deployed and *routed* correctly here (Vercel matched
+ * the path fine) but crashed on every invocation with an opaque
+ * FUNCTION_INVOCATION_FAILED, before our own code ever ran. Vercel's own
+ * current docs for a root-level /api file use this Fetch-based shape, and
+ * switching to it fixed the crash — see the PR/commit this comment shipped
+ * in for the failing curl output that pinned this down.
  *
  * Until OPENAI_API_KEY is configured (Vercel project env var), this
  * returns canned mock replies so the chat UI is fully exercisable without
@@ -36,35 +44,49 @@ practical, suitable for someone standing in a kitchen. Every suggestion
 you give must be vegan (no meat, fish, dairy, eggs, or honey) — offer a
 plant-based swap instead of a non-vegan ingredient.`;
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    res.status(405).json({ error: "Method not allowed" });
-    return;
-  }
+const chatFunction = {
+  async fetch(request: Request): Promise<Response> {
+    if (request.method !== "POST") {
+      return json({ error: "Method not allowed" }, 405, { Allow: "POST" });
+    }
 
-  const body = (req.body ?? {}) as { message?: unknown; history?: unknown; locale?: unknown };
-  const message = typeof body.message === "string" ? body.message.trim() : "";
-  const locale: Locale = body.locale === "en" ? "en" : "da";
+    let body: { message?: unknown; history?: unknown; locale?: unknown };
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: "Invalid JSON body" }, 400);
+    }
 
-  if (!message) {
-    res.status(400).json({ error: "message is required" });
-    return;
-  }
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+    const locale: Locale = body.locale === "en" ? "en" : "da";
 
-  const history: ChatMessage[] = Array.isArray(body.history)
-    ? body.history.filter(isChatMessage).slice(-20)
-    : [];
+    if (!message) {
+      return json({ error: "message is required" }, 400);
+    }
 
-  try {
-    const reply = process.env.OPENAI_API_KEY
-      ? await runAgent(message, history)
-      : mockReply(message, locale);
-    res.status(200).json({ reply });
-  } catch (err) {
-    console.error("nomi chat endpoint failed", err);
-    res.status(500).json({ error: "Nomi could not respond right now." });
-  }
+    const history: ChatMessage[] = Array.isArray(body.history)
+      ? body.history.filter(isChatMessage).slice(-20)
+      : [];
+
+    try {
+      const reply = process.env.OPENAI_API_KEY
+        ? await runAgent(message, history)
+        : mockReply(message, locale);
+      return json({ reply }, 200);
+    } catch (err) {
+      console.error("nomi chat endpoint failed", err);
+      return json({ error: "Nomi could not respond right now." }, 500);
+    }
+  },
+};
+
+export default chatFunction;
+
+function json(data: unknown, status: number, extraHeaders?: Record<string, string>): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json", ...extraHeaders },
+  });
 }
 
 function isChatMessage(value: unknown): value is ChatMessage {

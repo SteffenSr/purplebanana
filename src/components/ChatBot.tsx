@@ -45,7 +45,11 @@ export function ChatBot() {
     setSending(true);
 
     try {
-      const res = await fetch("/api/chat", {
+      // Trailing slash to match next.config.ts's trailingSlash: true and
+      // avoid an extra 308 redirect hop (Vercel's routing applies that
+      // redirect to every path on this deployment, this Vercel Function
+      // included, not just Next's own pages).
+      const res = await fetch("/api/chat/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, history: nextMessages, locale }),
