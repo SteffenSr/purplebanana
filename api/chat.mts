@@ -14,13 +14,20 @@ import type { AgentInputItem } from "@openai/agents";
  * "Recipe chatbot (Nomi) backend" section for the full rationale.
  *
  * Uses the Web-standard Request/Response handler shape (`export default {
- * fetch(request) {...} }`), not the older Node `(req, res)` signature —
- * that older shape deployed and *routed* correctly here (Vercel matched
- * the path fine) but crashed on every invocation with an opaque
- * FUNCTION_INVOCATION_FAILED, before our own code ever ran. Vercel's own
- * current docs for a root-level /api file use this Fetch-based shape, and
- * switching to it fixed the crash — see the PR/commit this comment shipped
- * in for the failing curl output that pinned this down.
+ * fetch(request) {...} }`), the shape Vercel's own current docs show for a
+ * root-level /api file — not the older Node `(req, res)` signature.
+ *
+ * The .mts extension (not .ts) is load-bearing, not cosmetic: Vercel reads
+ * this project's root tsconfig.json to compile files under /api, and that
+ * tsconfig sets "module": "esnext" for the Next.js app's own bundler. On a
+ * plain .ts file that left a literal `export default ...` in the compiled
+ * api/chat.js, which Node then tried to require() as CommonJS (no "type":
+ * "module" in package.json) and crashed with FUNCTION_INVOCATION_FAILED on
+ * every invocation, before any of this file's own code ran — the handler
+ * shape was a red herring. .mts always compiles/loads as an ES module by
+ * extension, regardless of package.json or tsconfig, which fixes it
+ * without touching the shared root tsconfig. See docs/architecture.md's
+ * "Recipe chatbot (Nomi) backend" section for the full story.
  *
  * Until OPENAI_API_KEY is configured (Vercel project env var), this
  * returns canned mock replies so the chat UI is fully exercisable without

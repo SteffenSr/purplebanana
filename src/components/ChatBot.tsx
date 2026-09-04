@@ -11,7 +11,7 @@ interface ChatMessage {
 /**
  * Full-screen chat experience for "Nomi", the recipe assistant experiment
  * (src/app/experiments/chatbot). Talks to the /api/chat serverless
- * function (api/chat.ts, deployed separately from this statically exported
+ * function (api/chat.mts, deployed separately from this statically exported
  * app — see docs/architecture.md) which runs the OpenAI Agents SDK, or
  * returns a mocked reply until an API key is configured.
  */
