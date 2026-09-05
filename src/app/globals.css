@@ -386,6 +386,7 @@ button {
    --------------------------------------------------------------------- */
 .recipe-hero {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--space-4);
   margin-bottom: var(--space-4);
@@ -393,6 +394,17 @@ button {
 
 .recipe-hero__emoji {
   font-size: 4rem;
+}
+
+.recipe-hero__info {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.recipe-hero__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
 }
 
 .recipe-hero-image {
@@ -623,6 +635,39 @@ button {
   resize: vertical;
   font-size: var(--font-size-base);
   line-height: 1.4;
+}
+
+.setup-guide {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.setup-guide__title {
+  font-size: var(--font-size-lg);
+}
+
+.setup-guide__url {
+  display: block;
+  width: 100%;
+  overflow-wrap: break-word;
+  background: var(--color-bg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-size-base);
+}
+
+.setup-guide__steps {
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-4);
+}
+
+.setup-guide__steps li {
+  margin-bottom: var(--space-2);
 }
 
 /* ---------------------------------------------------------------------
@@ -1102,6 +1147,16 @@ button {
   padding: var(--space-6) var(--space-4);
   color: var(--color-text-muted);
   font-size: var(--font-size-lg);
+}
+
+.recipe-note__text {
+  white-space: pre-wrap;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-lg);
+  line-height: 1.5;
 }
 
 .visually-hidden {

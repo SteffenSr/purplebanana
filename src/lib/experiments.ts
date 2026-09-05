@@ -12,11 +12,10 @@ export interface ExperimentDef {
   emoji: string;
 }
 
-export type ExperimentId = "onboarding" | "login" | "profile" | "habit-assistant" | "chatbot";
+export type ExperimentId = "onboarding" | "profile" | "habit-assistant" | "chatbot";
 
 export const experiments: ExperimentDef[] = [
   { id: "onboarding", href: "/experiments/onboarding", emoji: "👋" },
-  { id: "login", href: "/experiments/login", emoji: "🔐" },
   { id: "profile", href: "/experiments/profile", emoji: "👤" },
   { id: "habit-assistant", href: "/experiments/habit-assistant", emoji: "📈" },
   { id: "chatbot", href: "/experiments/chatbot", emoji: "💬" },

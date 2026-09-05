@@ -1,9 +1,9 @@
-import type { Recipe } from "./types";
+import type { SeedRecipe } from "./types";
 
 /**
- * Bundled starter recipes. This ships inside the static export so the app
- * has content on first load with zero network requests, then gets copied
- * into IndexedDB (see db.ts) so the user can edit/add recipes offline.
+ * Simmer's bundled starter recipes — shared, read-only content seeded once
+ * into Postgres (`npm run db:seed`, see src/db/seed.ts) as recipes with
+ * `ownerId: null`, visible to every signed-in user alongside their own.
  *
  * All recipes are vegan — no meat, fish, dairy, eggs, or honey. See
  * AGENTS.md's "Adding or editing recipes" section before adding more.
@@ -12,7 +12,7 @@ import type { Recipe } from "./types";
  * primary language, English the second. See docs/architecture.md's
  * "Localization" section and AGENTS.md before adding a recipe without both.
  */
-export const seedRecipes: Recipe[] = [
+export const seedRecipes: SeedRecipe[] = [
   {
     id: "creamy-tomato-pasta",
     title: { da: "Cremet tomatpasta", en: "Creamy Tomato Pasta" },

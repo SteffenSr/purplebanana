@@ -1,11 +1,10 @@
-import { seedRecipes } from "@/lib/seed-recipes";
+import { auth } from "@/auth";
+import { getVisibleRecipe } from "@/lib/recipes-db";
 import { CookMode } from "@/components/CookMode";
-
-export function generateStaticParams() {
-  return seedRecipes.map((recipe) => ({ id: recipe.id }));
-}
 
 export default async function CookPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <CookMode id={id} />;
+  const session = await auth();
+  const recipe = await getVisibleRecipe(session!.user.id, id);
+  return <CookMode id={id} recipe={recipe} />;
 }

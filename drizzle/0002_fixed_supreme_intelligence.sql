@@ -1,0 +1,1 @@
+ALTER TABLE "user_recipe_state" ADD COLUMN "recipeNoteUpdatedAt" timestamp;

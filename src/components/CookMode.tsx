@@ -1,19 +1,21 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRecipe } from "@/lib/hooks";
-import { markCooked, saveStepNote, saveIngredientNote, ingredientKey } from "@/lib/db";
+import { useRouter } from "next/navigation";
+import { markCookedAction, saveIngredientNoteAction, saveStepNoteAction } from "@/app/actions/recipes";
+import { ingredientKey } from "@/lib/ingredient-key";
 import { useWakeLock } from "@/lib/use-wake-lock";
 import { formatClock, useRecipeTimers, type StepTimerView } from "@/lib/use-timers";
 import { useLocale } from "@/lib/use-locale";
 import { NoteSheet } from "./NoteSheet";
-import type { Recipe, Step } from "@/lib/types";
+import type { Step } from "@/lib/types";
+import type { RecipeWithState } from "@/lib/recipes-db";
 import type { Locale } from "@/lib/locale";
 import type { Dictionary } from "@/lib/translations";
 
-export function CookMode({ id }: { id: string }) {
-  const { state, refresh } = useRecipe(id);
+export function CookMode({ id, recipe }: { id: string; recipe: RecipeWithState | undefined }) {
   const { locale, t } = useLocale();
+  const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const [finished, setFinished] = useState(false);
   const [noteStep, setNoteStep] = useState<Step | null>(null);
@@ -26,7 +28,6 @@ export function CookMode({ id }: { id: string }) {
   // Keep the screen from locking mid-instruction — the point of this whole screen.
   useWakeLock();
 
-  const recipe = state.status === "ready" ? state.data : undefined;
   const steps = useMemo(() => recipe?.steps ?? [], [recipe]);
   const currentStep: Step | undefined = activeIndex < steps.length ? steps[activeIndex] : undefined;
 
@@ -82,16 +83,6 @@ export function CookMode({ id }: { id: string }) {
     scrollRef.current?.scrollTo({ top: 0 });
   }, [id]);
 
-  if (state.status === "loading") {
-    return (
-      <div className="cook-mode">
-        <div className="cook-mode__body">
-          <p className="text-muted">{t.cookMode.loading}</p>
-        </div>
-      </div>
-    );
-  }
-
   if (!recipe || steps.length === 0) {
     return (
       <div className="cook-mode">
@@ -129,7 +120,7 @@ export function CookMode({ id }: { id: string }) {
   return (
     <div className="cook-mode">
       <div className="cook-mode__top">
-        {/* Plain <a>: see RecipeCard.tsx for why this app avoids next/link. */}
+        {/* Plain <a>: see docs/architecture.md's "Navigation" section. */}
         <a href={`/recipes/${id}/`} className="btn btn-icon" aria-label={t.cookMode.exitCookMode}>
           ✕
         </a>
@@ -212,7 +203,7 @@ export function CookMode({ id }: { id: string }) {
             type="button"
             className="btn btn-primary btn-block"
             onClick={async () => {
-              await markCooked(id);
+              await markCookedAction(id);
               setFinished(true);
             }}
           >
@@ -224,9 +215,9 @@ export function CookMode({ id }: { id: string }) {
       {noteStep && (
         <NoteSheet
           title={t.notes.stepTitle(noteStep.order)}
-          initialNote={recipe.stepNotes?.[noteStep.order] ?? ""}
+          initialNote={recipe.state.stepNotes[noteStep.order] ?? ""}
           onSave={({ note }) => {
-            saveStepNote(recipe.id, noteStep.order, note).then(refresh);
+            saveStepNoteAction(recipe.id, noteStep.order, note).then(() => router.refresh());
           }}
           onClose={() => setNoteStep(null)}
         />
@@ -237,10 +228,10 @@ export function CookMode({ id }: { id: string }) {
           title={t.notes.ingredientTitle(openIngredient.label)}
           ingredientId={openIngredient.ingredientId}
           showAmount
-          initialNote={recipe.ingredientNotes?.[openIngredient.key]?.note ?? ""}
-          initialAmount={recipe.ingredientNotes?.[openIngredient.key]?.amount ?? ""}
+          initialNote={recipe.state.ingredientNotes[openIngredient.key]?.note ?? ""}
+          initialAmount={recipe.state.ingredientNotes[openIngredient.key]?.amount ?? ""}
           onSave={({ note, amount }) => {
-            saveIngredientNote(recipe.id, openIngredient.key, { note, amount }).then(refresh);
+            saveIngredientNoteAction(recipe.id, openIngredient.key, { note, amount }).then(() => router.refresh());
           }}
           onClose={() => setOpenIngredient(null)}
         />
@@ -251,7 +242,7 @@ export function CookMode({ id }: { id: string }) {
 
 interface StepPanelProps {
   step: Step;
-  recipe: Recipe;
+  recipe: RecipeWithState;
   locale: Locale;
   t: Dictionary;
   isActive: boolean;
@@ -261,7 +252,7 @@ interface StepPanelProps {
   onStartTimer: () => void;
   onDismissTimer: () => void;
   onOpenNote: () => void;
-  onOpenIngredient: (ingredient: Recipe["ingredients"][number]) => void;
+  onOpenIngredient: (ingredient: RecipeWithState["ingredients"][number]) => void;
 }
 
 function StepPanel({
@@ -278,7 +269,7 @@ function StepPanel({
   onOpenNote,
   onOpenIngredient,
 }: StepPanelProps) {
-  const stepNote = recipe.stepNotes?.[step.order];
+  const stepNote = recipe.state.stepNotes[step.order];
   const stepIngredients = (step.ingredientRefs ?? [])
     .map((key) => recipe.ingredients.find((ing) => ingredientKey(ing) === key))
     .filter((ing): ing is NonNullable<typeof ing> => !!ing);
@@ -330,7 +321,7 @@ function StepPanel({
           {stepIngredients.map((ing) => {
             const key = ingredientKey(ing);
             const label = ing.text[locale];
-            const amount = recipe.ingredientNotes?.[key]?.amount;
+            const amount = recipe.state.ingredientNotes[key]?.amount;
             return (
               <li key={key}>
                 <button

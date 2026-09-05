@@ -1,33 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { useRecipe } from "@/lib/hooks";
-import { toggleFavorite, ingredientKey, saveStepNote, saveIngredientNote } from "@/lib/db";
+import { useRouter } from "next/navigation";
+import {
+  saveIngredientNoteAction,
+  saveStepNoteAction,
+  toggleFavoriteAction,
+} from "@/app/actions/recipes";
+import { ingredientKey } from "@/lib/ingredient-key";
 import { useLocale } from "@/lib/use-locale";
 import { NoteSheet } from "./NoteSheet";
+import type { RecipeWithState } from "@/lib/recipes-db";
 
 type OpenSheet =
   | { kind: "step"; order: number }
   | { kind: "ingredient"; key: string; label: string; ingredientId?: string };
 
-export function RecipeDetail({ id }: { id: string }) {
-  const { state, refresh } = useRecipe(id);
+export function RecipeDetail({ recipe }: { recipe: RecipeWithState | undefined }) {
   const { locale, t } = useLocale();
+  const router = useRouter();
   const [openSheet, setOpenSheet] = useState<OpenSheet | null>(null);
 
-  if (state.status === "loading") {
-    return (
-      <div className="container">
-        <p className="text-muted">{t.recipeDetail.loading}</p>
-      </div>
-    );
-  }
-
-  if (state.status === "error" || !state.data) {
+  if (!recipe) {
     return (
       <div className="container">
         <p className="empty-state">{t.recipeDetail.notFound}</p>
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- full navigation needed offline, see RecipeCard.tsx */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- see docs/architecture.md's "Navigation" section */}
         <a href="/" className="btn btn-secondary">
           {t.recipeDetail.backToRecipes}
         </a>
@@ -35,23 +33,19 @@ export function RecipeDetail({ id }: { id: string }) {
     );
   }
 
-  const recipe = state.data;
-  const lastCooked = recipe.lastCookedAt
-    ? new Date(recipe.lastCookedAt).toLocaleDateString(locale)
+  const lastCooked = recipe.state.lastCookedAt
+    ? new Date(recipe.state.lastCookedAt).toLocaleDateString(locale)
     : null;
 
   return (
     <div className="container">
-      {/* Plain <a>: full-page navigation, so it works via the service
-          worker's cache even when next/link's soft navigation can't. */}
-      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- see docs/architecture.md's "Navigation" section */}
       <a href="/" className="btn btn-secondary btn-icon" aria-label={t.recipeDetail.backToRecipes}>
         ←
       </a>
 
       {recipe.imageUrl && (
-        // Plain <img>: see RecipeCard.tsx for why this app skips next/image.
-        // eslint-disable-next-line @next/next/no-img-element
+        // eslint-disable-next-line @next/next/no-img-element -- see RecipeCard.tsx
         <img className="recipe-hero-image" src={recipe.imageUrl} alt={recipe.title[locale]} />
       )}
 
@@ -61,22 +55,29 @@ export function RecipeDetail({ id }: { id: string }) {
             {recipe.emoji}
           </span>
         )}
-        <div>
+        <div className="recipe-hero__info">
           <h1>{recipe.title[locale]}</h1>
           <p className="text-muted">{recipe.description[locale]}</p>
         </div>
-        <button
-          type="button"
-          className="btn btn-icon"
-          aria-label={recipe.favorite ? t.recipeCard.removeFavorite : t.recipeCard.addFavorite}
-          aria-pressed={!!recipe.favorite}
-          onClick={async () => {
-            await toggleFavorite(recipe.id);
-            refresh();
-          }}
-        >
-          {recipe.favorite ? "⭐" : "☆"}
-        </button>
+        <div className="recipe-hero__actions">
+          {recipe.state.recipeNote && (
+            <a href={`/recipes/${recipe.id}/note/`} className="btn btn-icon" aria-label={t.recipeDetail.viewNote}>
+              📝
+            </a>
+          )}
+          <button
+            type="button"
+            className="btn btn-icon"
+            aria-label={recipe.state.favorite ? t.recipeCard.removeFavorite : t.recipeCard.addFavorite}
+            aria-pressed={recipe.state.favorite}
+            onClick={async () => {
+              await toggleFavoriteAction(recipe.id);
+              router.refresh();
+            }}
+          >
+            {recipe.state.favorite ? "⭐" : "☆"}
+          </button>
+        </div>
       </div>
 
       <div className="badge-row">
@@ -94,7 +95,7 @@ export function RecipeDetail({ id }: { id: string }) {
       <ul className="ingredient-list">
         {recipe.ingredients.map((ingredient) => {
           const key = ingredientKey(ingredient);
-          const ingredientNote = recipe.ingredientNotes?.[key];
+          const ingredientNote = recipe.state.ingredientNotes[key];
           const label = ingredient.text[locale];
           return (
             <li key={key}>
@@ -131,7 +132,7 @@ export function RecipeDetail({ id }: { id: string }) {
               onClick={() => setOpenSheet({ kind: "step", order: step.order })}
             >
               <span>{step.instruction[locale]}</span>
-              {recipe.stepNotes?.[step.order] && (
+              {recipe.state.stepNotes[step.order] && (
                 <span className="step-preview-list__note-dot" aria-hidden>
                   📝
                 </span>
@@ -144,9 +145,9 @@ export function RecipeDetail({ id }: { id: string }) {
       {openSheet?.kind === "step" && (
         <NoteSheet
           title={t.notes.stepTitle(openSheet.order)}
-          initialNote={recipe.stepNotes?.[openSheet.order] ?? ""}
+          initialNote={recipe.state.stepNotes[openSheet.order] ?? ""}
           onSave={({ note }) => {
-            saveStepNote(recipe.id, openSheet.order, note).then(refresh);
+            saveStepNoteAction(recipe.id, openSheet.order, note).then(() => router.refresh());
           }}
           onClose={() => setOpenSheet(null)}
         />
@@ -157,10 +158,10 @@ export function RecipeDetail({ id }: { id: string }) {
           title={t.notes.ingredientTitle(openSheet.label)}
           ingredientId={openSheet.ingredientId}
           showAmount
-          initialNote={recipe.ingredientNotes?.[openSheet.key]?.note ?? ""}
-          initialAmount={recipe.ingredientNotes?.[openSheet.key]?.amount ?? ""}
+          initialNote={recipe.state.ingredientNotes[openSheet.key]?.note ?? ""}
+          initialAmount={recipe.state.ingredientNotes[openSheet.key]?.amount ?? ""}
           onSave={({ note, amount }) => {
-            saveIngredientNote(recipe.id, openSheet.key, { note, amount }).then(refresh);
+            saveIngredientNoteAction(recipe.id, openSheet.key, { note, amount }).then(() => router.refresh());
           }}
           onClose={() => setOpenSheet(null)}
         />

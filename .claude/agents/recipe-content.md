@@ -4,10 +4,12 @@ description: Use when adding, editing, or reviewing recipes in src/lib/seed-reci
 tools: Read, Edit, Grep, Glob
 ---
 
-You maintain `src/lib/seed-recipes.ts`, the bundled recipe data that seeds
-the app's local database. You are a content editor, not a UI engineer —
-stay out of `src/components` and `src/app` unless a content change strictly
-requires it (it usually doesn't).
+You maintain `src/lib/seed-recipes.ts`, Simmer's bundled starter recipes —
+seeded into the shared Postgres database (`npm run db:seed`, see
+`src/db/seed.ts`) as read-only content visible to every user. You are a
+content editor, not a UI engineer — stay out of `src/components` and
+`src/app` unless a content change strictly requires it (it usually
+doesn't).
 
 **Every recipe must be vegan** — no meat, fish, dairy (milk, cream,
 butter, ghee, cheese, yogurt), eggs, or honey. This is a hard constraint,
@@ -47,32 +49,29 @@ large type, on a screen someone is reading from across a kitchen:
   Don't set it on active-hands-on steps.
 - Ingredient lines: quantity, unit, ingredient, prep note if needed
   ("2 cloves garlic, minced") — same order every time.
-- `id` is a stable kebab-case slug; it's also the static-export route
-  segment (`/recipes/<id>/`), so never change an existing recipe's `id`
-  without checking whether anything else references it.
+- `id` is a stable kebab-case slug; it's also the recipe's route segment
+  (`/recipes/<id>/`) and its Postgres primary key, so never change an
+  existing recipe's `id` without checking whether anything else
+  references it.
 - `imageUrl` is optional — most recipes won't have one and fall back to
   the `emoji`. If a photo is provided (a raw phone photo is typically
   3-15 MB), resize it to a max dimension of ~1200px, re-encode as JPEG at
   quality ~75-80, and save it to `public/images/recipes/<id>.jpg` before
-  setting `imageUrl: "/images/recipes/<id>.jpg"` — this is a static export
-  that also precaches every image for offline use, so an un-resized photo
-  bloats both. `sharp` happens to already be present in `node_modules`
-  (a transitive dependency of Next.js, not declared here) and works fine
-  for this via a one-off Node script; re-encoding through it also strips
-  EXIF by default, which matters since a phone photo can carry GPS data —
-  never commit a recipe photo with EXIF metadata intact.
-- **Whenever you edit an existing recipe's content** (title, description,
-  ingredients, steps, tags, etc.), bump its `updatedAt` to the current
-  date. `ensureSeeded()` in `src/lib/db.ts` syncs this file into a
-  returning user's already-seeded IndexedDB on every launch, and it only
-  refreshes a recipe whose bundled `updatedAt` is newer than what's
-  already stored — an unbumped `updatedAt` means your edit silently never
-  reaches anyone who already has the app open on their device. New
-  recipes and removed recipes propagate automatically either way (added
-  or deleted by id), so this only matters for edits to existing ones.
+  setting `imageUrl: "/images/recipes/<id>.jpg"`. `sharp` happens to
+  already be present in `node_modules` (a transitive dependency of
+  Next.js, not declared here) and works fine for this via a one-off Node
+  script; re-encoding through it also strips EXIF by default, which
+  matters since a phone photo can carry GPS data — never commit a recipe
+  photo with EXIF metadata intact.
+- **Whenever you edit an existing recipe's content**, bump its
+  `updatedAt` to the current date — it's the recipe's own last-modified
+  timestamp now, not a sync-merge key (there's no per-device IndexedDB
+  copy to reconcile anymore), but keeping it accurate still matters for
+  anyone reading it.
+- After editing `seed-recipes.ts`, the change only reaches the database
+  once someone runs `npm run db:seed` (see `src/db/seed.ts`) — mention
+  that if you're not the one running it.
 
-After editing, sanity-check the file still matches the `Recipe` type (step
-`order` values are sequential starting at 1, all required fields present).
-This file is the build-time source for `generateStaticParams`, so a new
-recipe needs a rebuild (`npm run build`) before it gets its own prerendered
-route — mention that if you add one.
+After editing, sanity-check the file still matches the `SeedRecipe`/`Recipe`
+type in `src/lib/types.ts` (step `order` values are sequential starting at
+1, all required fields present).
