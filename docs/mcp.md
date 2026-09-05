@@ -136,10 +136,13 @@ npx @modelcontextprotocol/inspector
 
 Point it at `http://localhost:3000/api/mcp` with transport "Streamable
 HTTP" and an `Authorization: Bearer <your token>` header, or run
-`npx @modelcontextprotocol/inspector npx tsx src/mcp/stdio.ts` to test
-over stdio instead (no token needed locally — see "Authentication"). From
-the Inspector's "Tools" tab you can call each of the five tools directly
-and see raw request/response JSON.
+`npx @modelcontextprotocol/inspector npm run mcp:stdio` to test over
+stdio instead (no token needed locally — see "Authentication"; use `npm
+run mcp:stdio`, not a bare `tsx src/mcp/stdio.ts`, since the npm script
+sets `NODE_OPTIONS=--conditions=react-server`, which `server-only` needs
+to resolve outside Next's own bundler). From the Inspector's "Tools" tab
+you can call each of the five tools directly and see raw request/response
+JSON.
 
 **curl**, for a quick manual check of the HTTP transport:
 

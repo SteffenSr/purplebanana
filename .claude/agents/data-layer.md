@@ -25,7 +25,15 @@ Rules:
 - Every `*-db.ts` module starts with `import "server-only"` — keep it that
   way. These modules hold a real Postgres connection string and must never
   end up in a client bundle; that import makes such a mistake a build
-  error instead of a runtime credential leak.
+  error instead of a runtime credential leak. `next build`/`next dev`
+  resolve it fine on their own (Next's bundler aliases it via the
+  `react-server` export condition), but anything that imports one of
+  these modules *outside* Next's bundler — `npm run mcp:stdio` in
+  particular — needs `NODE_OPTIONS=--conditions=react-server` set, or
+  Node loads the package's real (throwing) implementation instead of the
+  no-op one. `mcp:stdio`'s own script already sets this; if you add
+  another standalone script that imports a `*-db.ts` module, set it there
+  too rather than removing the `server-only` import.
 - **Every query takes `userId` explicitly** and scopes its `WHERE` clause
   by it (recipes: `ownerId IS NULL OR ownerId = $userId`; everything else:
   `userId = $userId`). This is the actual mechanism behind "one Simmer

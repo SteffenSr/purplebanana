@@ -12,7 +12,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/db/seed.ts",
-    "mcp:stdio": "tsx src/mcp/stdio.ts",
+    "mcp:stdio": "NODE_OPTIONS=--conditions=react-server tsx src/mcp/stdio.ts",
     "test:mcp": "tsx --test src/mcp/__tests__/*.test.ts"
   },
   "dependencies": {

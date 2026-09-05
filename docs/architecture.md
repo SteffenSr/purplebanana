@@ -31,7 +31,11 @@ not anonymous per-device storage.
   every function, so a request can never read another user's data. Both
   the app's Server Components/Actions and the MCP server's repositories
   (`src/mcp/repositories/drizzle-*.ts`) call into these same modules; see
-  the `data-layer` subagent before changing any of them.
+  the `data-layer` subagent before changing any of them. Anything that
+  loads one of these modules outside Next's own bundler (`npm run
+  mcp:stdio`, notably) needs `NODE_OPTIONS=--conditions=react-server` set
+  for `server-only` to resolve — Next aliases it automatically, plain
+  Node/tsx doesn't. `mcp:stdio`'s script already sets this.
 - Routes are ordinary dynamic Next.js routes again — no
   `generateStaticParams`, no build-time route enumeration. `/recipes/[id]`
   fetches its recipe from Postgres per request.
