@@ -8,9 +8,13 @@
     "dev": "next dev",
     "build": "node scripts/generate-sw-precache.mjs",
     "start": "npx serve out",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "mcp:http": "tsx src/mcp/http.ts",
+    "mcp:stdio": "tsx src/mcp/stdio.ts",
+    "test:mcp": "tsx --test src/mcp/__tests__/*.test.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@openai/agents": "^0.17.0",
     "dexie": "^4.0.10",
     "next": "^16.3.1",
@@ -25,6 +29,7 @@
     "@types/react-dom": "^19.0.2",
     "eslint": "^9.18.0",
     "eslint-config-next": "^16.3.1",
+    "tsx": "^4.23.13",
     "typescript": "^5.7.3"
   }
 }

@@ -57,6 +57,11 @@ If a change works against any of those four goals, it's wrong even if it
   before touching any of this.
 - Internal navigation uses plain `<a>`, not `next/link`'s `<Link>` — see
   docs/architecture.md's "Navigation uses plain `<a>`" section for why.
+- **MCP server** (`src/mcp/`), a separate Node process — not part of the
+  static export — that exposes Simmer's food data (recipes, food/household
+  preferences, meal history) to external MCP clients like Claude or
+  ChatGPT over Streamable HTTP (stdio for local dev). See docs/mcp.md for
+  the full architecture, tools, and how to run/test it.
 
 ## Where things live
 
@@ -92,6 +97,10 @@ vercel.json                pins Vercel's build command to `npm run build` (see a
 docs/
   architecture.md            why the static-export + IndexedDB split works this way
   design-system.md           the type/color/spacing tokens and the reasoning behind them
+  mcp.md                     the MCP server: architecture, tools, running/testing, auth
+src/mcp/                   MCP server exposing Simmer data to external AI assistants
+  auth.ts, server.ts, http.ts, stdio.ts   context/auth, tool registration, transports
+  domain/, repositories/, services/, tools/, __tests__/
 .claude/agents/            specialized subagents for this repo's recurring work types
 ```
 
@@ -177,6 +186,9 @@ npm install
 npm run dev      # local dev server
 npm run build    # static export to ./out
 npm run lint
+npm run mcp:http # Simmer MCP server, Streamable HTTP — see docs/mcp.md
+npm run mcp:stdio # same, over stdio (local dev / MCP Inspector)
+npm run test:mcp # automated tests for the MCP server
 ```
 
 ## Subagents
