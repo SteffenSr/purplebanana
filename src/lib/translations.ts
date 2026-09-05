@@ -37,6 +37,13 @@ export interface Dictionary {
     startCooking: string;
     ingredients: string;
     steps: string;
+    viewNote: string;
+  };
+  recipeNote: {
+    heading: string;
+    back: string;
+    updatedAt: (date: string) => string;
+    empty: string;
   };
   cookMode: {
     loading: string;
@@ -194,6 +201,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       startCooking: "▶ Start madlavning",
       ingredients: "Ingredienser",
       steps: "Trin",
+      viewNote: "Se din note",
+    },
+    recipeNote: {
+      heading: "Din note",
+      back: "← Tilbage til opskriften",
+      updatedAt: (date) => `Sidst opdateret ${date}`,
+      empty: "Ingen note endnu. Tilføj en via Claude, ChatGPT eller en anden MCP-klient.",
     },
     cookMode: {
       loading: "Henter opskrift…",
@@ -370,6 +384,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       startCooking: "▶ Start Cooking",
       ingredients: "Ingredients",
       steps: "Steps",
+      viewNote: "View your note",
+    },
+    recipeNote: {
+      heading: "Your note",
+      back: "← Back to recipe",
+      updatedAt: (date) => `Last updated ${date}`,
+      empty: "No note yet. Add one via Claude, ChatGPT, or another MCP client.",
     },
     cookMode: {
       loading: "Loading recipe…",

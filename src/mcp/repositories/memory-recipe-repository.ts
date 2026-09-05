@@ -29,6 +29,7 @@ const emptyState: UserRecipeState = {
   favorite: false,
   lastCookedAt: null,
   recipeNote: null,
+  recipeNoteUpdatedAt: null,
   stepNotes: {},
   ingredientNotes: {},
 };
@@ -109,7 +110,7 @@ export class InMemoryRecipeRepository implements RecipeRepository {
     const current = this.stateFor(userId, id);
     const trimmed = note.trim();
     const finalNote = mode === "replace" ? trimmed : current.recipeNote ? `${current.recipeNote}\n${trimmed}` : trimmed;
-    this.states.set(key, { ...current, recipeNote: finalNote });
+    this.states.set(key, { ...current, recipeNote: finalNote, recipeNoteUpdatedAt: new Date().toISOString() });
     return { id, note: finalNote };
   }
 

@@ -153,6 +153,8 @@ export interface UserRecipeState {
    * update_recipe_note tool; see src/mcp/tools/update-recipe-note.ts.
    */
   recipeNote: string | null;
+  /** Timestamp of `recipeNote`'s creation or most recent update; null if there's no note. */
+  recipeNoteUpdatedAt: string | null;
   /** Personal notes on individual steps, keyed by `Step.order`. */
   stepNotes: Record<number, string>;
   /**

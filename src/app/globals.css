@@ -1137,6 +1137,16 @@ button {
   font-size: var(--font-size-lg);
 }
 
+.recipe-note__text {
+  white-space: pre-wrap;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-lg);
+  line-height: 1.5;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

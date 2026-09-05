@@ -59,6 +59,11 @@ export function RecipeDetail({ recipe }: { recipe: RecipeWithState | undefined }
           <h1>{recipe.title[locale]}</h1>
           <p className="text-muted">{recipe.description[locale]}</p>
         </div>
+        {recipe.state.recipeNote && (
+          <a href={`/recipes/${recipe.id}/note/`} className="btn btn-icon" aria-label={t.recipeDetail.viewNote}>
+            📝
+          </a>
+        )}
         <button
           type="button"
           className="btn btn-icon"

@@ -15,6 +15,13 @@
       "when": 1788634231286,
       "tag": "0001_large_jack_power",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788641019023,
+      "tag": "0002_fixed_supreme_intelligence",
+      "breakpoints": true
     }
   ]
 }

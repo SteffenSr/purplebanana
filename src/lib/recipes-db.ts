@@ -17,6 +17,7 @@ export const emptyUserRecipeState: UserRecipeState = {
   favorite: false,
   lastCookedAt: null,
   recipeNote: null,
+  recipeNoteUpdatedAt: null,
   stepNotes: {},
   ingredientNotes: {},
 };
@@ -51,6 +52,7 @@ function toUserRecipeState(row: UserRecipeStateRow | undefined): UserRecipeState
     favorite: row.favorite,
     lastCookedAt: row.lastCookedAt ? row.lastCookedAt.toISOString() : null,
     recipeNote: row.recipeNote ?? null,
+    recipeNoteUpdatedAt: row.recipeNoteUpdatedAt ? row.recipeNoteUpdatedAt.toISOString() : null,
     stepNotes: row.stepNotes as Record<number, string>,
     ingredientNotes: row.ingredientNotes as Record<string, IngredientNote>,
   };
@@ -93,7 +95,10 @@ async function upsertState(
   userId: string,
   recipeId: string,
   patch: Partial<
-    Pick<typeof userRecipeState.$inferInsert, "favorite" | "lastCookedAt" | "recipeNote" | "stepNotes" | "ingredientNotes">
+    Pick<
+      typeof userRecipeState.$inferInsert,
+      "favorite" | "lastCookedAt" | "recipeNote" | "recipeNoteUpdatedAt" | "stepNotes" | "ingredientNotes"
+    >
   >
 ): Promise<void> {
   await db
@@ -153,7 +158,7 @@ export async function updateRecipeNote(
   const trimmed = note.trim();
 
   if (mode === "replace") {
-    await upsertState(userId, recipeId, { recipeNote: trimmed || null });
+    await upsertState(userId, recipeId, { recipeNote: trimmed || null, recipeNoteUpdatedAt: new Date() });
     return trimmed;
   }
 
@@ -163,7 +168,7 @@ export async function updateRecipeNote(
     .where(and(eq(userRecipeState.userId, userId), eq(userRecipeState.recipeId, recipeId)));
   const existing = stateRow?.recipeNote?.trim();
   const combined = existing ? `${existing}\n${trimmed}` : trimmed;
-  await upsertState(userId, recipeId, { recipeNote: combined });
+  await upsertState(userId, recipeId, { recipeNote: combined, recipeNoteUpdatedAt: new Date() });
   return combined;
 }
 

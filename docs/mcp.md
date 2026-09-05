@@ -124,6 +124,15 @@ without first fetching, editing, and resubmitting the whole thing:
   never guesses at merge intent itself, it only ever does the one
   explicit thing the `mode` argument asked for.
 
+The note is also visible in the app itself, not just via `get_recipe`: a
+📝 icon appears on a recipe's detail page (`src/components/RecipeDetail.tsx`)
+whenever `UserRecipeState.recipeNote` is set, linking to a read-only page
+(`src/app/recipes/[id]/note/`, `src/components/RecipeNote.tsx`) showing the
+note text and when it was created or last updated
+(`UserRecipeState.recipeNoteUpdatedAt`, set by `updateRecipeNote()` in
+`src/lib/recipes-db.ts` on every write). There's no in-app editor for the
+note yet — MCP's `update_recipe_note` is the only way to write one.
+
 ### Errors
 
 Tool handlers catch the domain errors in `src/mcp/errors.ts` (`NotFoundError`,
