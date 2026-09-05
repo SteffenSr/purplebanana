@@ -4,6 +4,7 @@ import {
   toRecipeSummary,
   toSimmerRecipeView,
   type NewRecipeInput,
+  type RecipeNoteMode,
   type RecipeSummary,
   type SimmerRecipeView,
 } from "../domain/types";
@@ -24,7 +25,13 @@ function fromSeedRecipe(seed: SeedRecipe): Recipe {
   return { ...seed, ownerId: null, createdAt: seed.updatedAt };
 }
 
-const emptyState: UserRecipeState = { favorite: false, lastCookedAt: null, stepNotes: {}, ingredientNotes: {} };
+const emptyState: UserRecipeState = {
+  favorite: false,
+  lastCookedAt: null,
+  recipeNote: null,
+  stepNotes: {},
+  ingredientNotes: {},
+};
 
 /**
  * Test-only in-memory RecipeRepository — a fake, not the "dev
@@ -87,7 +94,23 @@ export class InMemoryRecipeRepository implements RecipeRepository {
 
   async getById(userId: string, id: string): Promise<SimmerRecipeView | undefined> {
     const recipe = this.allFor(userId).find((r) => r.id === id);
-    return recipe ? toSimmerRecipeView(recipe) : undefined;
+    return recipe ? toSimmerRecipeView(recipe, this.stateFor(userId, id)) : undefined;
+  }
+
+  async updateNote(
+    userId: string,
+    id: string,
+    note: string,
+    mode: RecipeNoteMode
+  ): Promise<{ id: string; note: string } | undefined> {
+    if (!this.allFor(userId).some((recipe) => recipe.id === id)) return undefined;
+
+    const key = `${userId}:${id}`;
+    const current = this.stateFor(userId, id);
+    const trimmed = note.trim();
+    const finalNote = mode === "replace" ? trimmed : current.recipeNote ? `${current.recipeNote}\n${trimmed}` : trimmed;
+    this.states.set(key, { ...current, recipeNote: finalNote });
+    return { id, note: finalNote };
   }
 
   async create(userId: string, input: NewRecipeInput): Promise<SimmerRecipeView> {
@@ -127,6 +150,6 @@ export class InMemoryRecipeRepository implements RecipeRepository {
     const existing = this.userRecipes.get(userId) ?? [];
     existing.push(recipe);
     this.userRecipes.set(userId, existing);
-    return toSimmerRecipeView(recipe);
+    return toSimmerRecipeView(recipe, emptyState);
   }
 }

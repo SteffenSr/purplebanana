@@ -3,6 +3,7 @@ import type {
   MealHistoryEntry,
   MealHistoryQuery,
   NewRecipeInput,
+  RecipeNoteMode,
   RecipeSummary,
   SimmerRecipeView,
 } from "../domain/types";
@@ -29,6 +30,8 @@ export interface RecipeRepository {
   search(userId: string, options: RecipeSearchOptions): Promise<RecipeSummary[]>;
   getById(userId: string, id: string): Promise<SimmerRecipeView | undefined>;
   create(userId: string, input: NewRecipeInput): Promise<SimmerRecipeView>;
+  /** Returns undefined if the recipe doesn't exist or isn't visible to `userId`. */
+  updateNote(userId: string, id: string, note: string, mode: RecipeNoteMode): Promise<{ id: string; note: string } | undefined>;
 }
 
 export interface MealHistoryRepository {

@@ -126,6 +126,8 @@ export const userRecipeState = pgTable(
       .references(() => recipes.id, { onDelete: "cascade" }),
     favorite: boolean("favorite").notNull().default(false),
     lastCookedAt: timestamp("lastCookedAt", { mode: "date" }),
+    /** A personal, whole-recipe note (e.g. "I use less chili") — private to this user, even on a shared starter recipe. See src/mcp/tools/update-recipe-note.ts. */
+    recipeNote: text("recipeNote"),
     stepNotes: jsonb("stepNotes").$type<Record<number, string>>().notNull().default({}),
     ingredientNotes: jsonb("ingredientNotes").$type<Record<string, IngredientNote>>().notNull().default({}),
   },

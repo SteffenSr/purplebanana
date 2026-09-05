@@ -8,6 +8,13 @@
       "when": 1788595717339,
       "tag": "0000_tan_red_ghost",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788634231286,
+      "tag": "0001_large_jack_power",
+      "breakpoints": true
     }
   ]
 }

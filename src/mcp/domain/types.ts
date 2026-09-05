@@ -46,12 +46,18 @@ export interface SimmerRecipeView {
   servings?: number;
   ingredients: Array<{ name: string; amount?: number; unit?: string }>;
   instructions: string[];
+  /** Author-level note on the recipe's own content — shared with anyone who can see this recipe. */
   notes?: string;
+  /** This user's own private note (e.g. a substitution that works for them) — see update_recipe_note. Never shared with other users, even on a shared starter recipe. */
+  personalNote?: string;
   tags: string[];
   source?: RecipeSource;
   createdAt: string;
   updatedAt: string;
 }
+
+/** update_recipe_note's mode parameter — see src/lib/recipes-db.ts's updateRecipeNote for the exact semantics. */
+export type RecipeNoteMode = "append" | "replace";
 
 /** save_recipe's input shape — see src/mcp/schemas.ts for the zod validation of this. */
 export interface NewRecipeInput {
@@ -113,7 +119,7 @@ export function toRecipeSummary(recipe: Recipe, state: UserRecipeState, locale: 
   };
 }
 
-export function toSimmerRecipeView(recipe: Recipe, locale: RecipeLocale = "da"): SimmerRecipeView {
+export function toSimmerRecipeView(recipe: Recipe, state: UserRecipeState, locale: RecipeLocale = "da"): SimmerRecipeView {
   const sortedSteps = [...recipe.steps].sort((a, b) => a.order - b.order);
   return {
     id: recipe.id,
@@ -127,6 +133,7 @@ export function toSimmerRecipeView(recipe: Recipe, locale: RecipeLocale = "da"):
     })),
     instructions: sortedSteps.map((step) => localize(step.instruction, locale)),
     notes: recipe.notes,
+    personalNote: state.recipeNote ?? undefined,
     tags: recipe.tags,
     source: recipe.source,
     createdAt: recipe.createdAt,

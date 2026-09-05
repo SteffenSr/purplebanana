@@ -57,6 +57,17 @@ export const saveRecipeInputShape = {
   source: sourceSchema.optional(),
 };
 
+export const updateRecipeNoteInputShape = {
+  id: z.string().trim().min(1).describe("Recipe id, from search_recipes or get_recipe."),
+  note: z.string().trim().min(1).max(2000).describe("The note text to record."),
+  mode: z
+    .enum(["append", "replace"])
+    .optional()
+    .describe(
+      'Default "append": adds this text to the end of the existing personal note, on its own line — nothing already stored is ever discarded. Pass "replace" ONLY when you have already read the existing note (via get_recipe) and merged it with the new information yourself; in that case `note` must be the complete, final note text, since it fully replaces what was stored.'
+    ),
+};
+
 const isoDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Expected an ISO date in YYYY-MM-DD form.");

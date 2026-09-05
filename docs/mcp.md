@@ -65,7 +65,7 @@ the very first iteration of this server (in-memory, no shared backend).
 
 ## Tools
 
-All five are registered in `src/mcp/server.ts`; each has its own file under
+All six are registered in `src/mcp/server.ts`; each has its own file under
 `src/mcp/tools/`. Every tool description tells the calling model *when* to
 use it, not just what it does — see each tool's `description` for the exact
 wording an MCP client will see.
@@ -74,8 +74,9 @@ wording an MCP client will see.
 |---|---|---|
 | `get_food_profile` | read | Dietary preferences, dislikes, favorite ingredients, goals, household members with their own likes/dislikes. Food-related data only — never a general user profile. |
 | `search_recipes` | read | Free-text/tag search over the user's own recipes (private + shared starter recipes). Returns compact summaries (`id`, `title`, `description`, `tags`, `lastCookedAt`) — never full ingredients or instructions. |
-| `get_recipe` | read | One complete recipe by `id` — ingredients, instructions, notes, tags, source. Meant to follow a `search_recipes` call, not be guessed at. |
+| `get_recipe` | read | One complete recipe by `id` — ingredients, instructions, notes, `personalNote`, tags, source. Meant to follow a `search_recipes` call, not be guessed at. |
 | `save_recipe` | **write** | Creates a new recipe in the user's collection. Input is validated with zod (`src/mcp/schemas.ts`) — at least one ingredient and one instruction step are required. Returns `{ id, title, createdAt }`. |
+| `update_recipe_note` | **write** | Records or updates the user's personal, whole-recipe note (e.g. a substitution or timing tweak) — private to them, even on a shared starter recipe. `mode: "append"` (default) adds to the existing note; `mode: "replace"` overwrites it, for a caller that already merged the text itself. See "Personal recipe notes" below. |
 | `get_meal_history` | read | Recorded meals, optionally filtered by date range (`from`/`to`, ISO `YYYY-MM-DD`) and/or free text (matched against notes/guests/occasion). Each entry resolves its `recipeIds` into `{ id, title }` refs via the same recipe repository `get_recipe` uses. |
 
 Reads and writes are marked differently on purpose: every tool declares MCP
@@ -94,6 +95,34 @@ already carries optional `guests`, `occasion`, and `feedback` fields, so
 that metadata can start being populated later without a breaking API
 change. There is no "log a meal" UI in the app yet, so `meal_history` rows
 only exist if inserted directly — see "What's intentionally not real yet."
+
+### Personal recipe notes
+
+`update_recipe_note` writes to `UserRecipeState.recipeNote`
+(`user_recipe_state.recipeNote` in Postgres) — a single free-text note
+per *(user, recipe)*, deliberately separate from `Recipe.notes` (an
+author-level note on the recipe's own content, set at `save_recipe` time
+and shared with anyone who can see that recipe). Two different users can
+each keep their own note on the same shared starter recipe without
+colliding, the same way favorites and step notes already work.
+
+The tool exists specifically so an MCP client can extend an existing note
+without first fetching, editing, and resubmitting the whole thing:
+
+- **`mode: "append"` (default).** The given `note` is added to whatever's
+  already stored, on its own line. This is the safe default — an
+  assistant that just wants to jot down "used less chili this time"
+  doesn't need to know or repeat what was there before, and nothing
+  already saved is ever silently discarded.
+- **`mode: "replace"`.** Only for a caller that has already called
+  `get_recipe` to read the existing note, merged it with new information
+  itself (e.g. de-duplicating, rewording, summarizing), and is submitting
+  the complete result. `note` becomes the entire stored value, replacing
+  what was there — this is the one case where the *server* does no
+  merging of its own, trusting the caller's `note` as final. This keeps
+  the server thin and deterministic (per the original design goal): it
+  never guesses at merge intent itself, it only ever does the one
+  explicit thing the `mode` argument asked for.
 
 ### Errors
 
@@ -141,7 +170,7 @@ stdio instead (no token needed locally — see "Authentication"; use `npm
 run mcp:stdio`, not a bare `tsx src/mcp/stdio.ts`, since the npm script
 sets `NODE_OPTIONS=--conditions=react-server`, which `server-only` needs
 to resolve outside Next's own bundler). From the Inspector's "Tools" tab
-you can call each of the five tools directly and see raw request/response
+you can call each of the six tools directly and see raw request/response
 JSON.
 
 **curl**, for a quick manual check of the HTTP transport:
@@ -167,8 +196,9 @@ npm run test:mcp
 
 Covers: `search_recipes` (free-text + tag filtering, summary shape), `get_recipe`
 (found + not-found), `save_recipe` (creation + retrievability), `save_recipe`
-input validation (missing/invalid fields), userId isolation (one user's saved
-recipe and profile/meal-history data is invisible to another), and
+input validation (missing/invalid fields), `update_recipe_note` (append vs.
+replace, not-found), userId isolation (one user's saved recipe, personal
+note, and profile/meal-history data is invisible to another), and
 `get_meal_history` (date-range and free-text queries).
 
 ## Environment variables

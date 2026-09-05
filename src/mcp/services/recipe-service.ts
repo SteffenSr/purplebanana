@@ -1,4 +1,4 @@
-import type { NewRecipeInput, RecipeSummary, SimmerRecipeView } from "../domain/types";
+import type { NewRecipeInput, RecipeNoteMode, RecipeSummary, SimmerRecipeView } from "../domain/types";
 import { NotFoundError } from "../errors";
 import type { RecipeRepository, RecipeSearchOptions } from "../repositories/types";
 
@@ -8,12 +8,17 @@ export interface SavedRecipeResult {
   createdAt: string;
 }
 
+export interface RecipeNoteResult {
+  id: string;
+  note: string;
+}
+
 /**
  * Application service between the recipe tools (search_recipes, get_recipe,
- * save_recipe) and the RecipeRepository. The repository already returns
- * search_recipes results as compact RecipeSummary objects (never full
- * ingredients/instructions) — this layer's job is turning a missing recipe
- * into the tool-facing NotFoundError, not reshaping data.
+ * save_recipe, update_recipe_note) and the RecipeRepository. The repository
+ * already returns search_recipes results as compact RecipeSummary objects
+ * (never full ingredients/instructions) — this layer's job is turning a
+ * missing recipe into the tool-facing NotFoundError, not reshaping data.
  */
 export class RecipeService {
   constructor(private readonly repository: RecipeRepository) {}
@@ -33,5 +38,13 @@ export class RecipeService {
   async save(userId: string, input: NewRecipeInput): Promise<SavedRecipeResult> {
     const recipe = await this.repository.create(userId, input);
     return { id: recipe.id, title: recipe.title, createdAt: recipe.createdAt };
+  }
+
+  async updateNote(userId: string, id: string, note: string, mode: RecipeNoteMode): Promise<RecipeNoteResult> {
+    const result = await this.repository.updateNote(userId, id, note, mode);
+    if (!result) {
+      throw new NotFoundError(`No recipe found with id "${id}". Use search_recipes to find a valid id.`);
+    }
+    return result;
   }
 }

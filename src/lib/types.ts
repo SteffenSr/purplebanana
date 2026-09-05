@@ -145,6 +145,14 @@ export interface Recipe {
 export interface UserRecipeState {
   favorite: boolean;
   lastCookedAt: string | null;
+  /**
+   * A personal, whole-recipe note — e.g. a substitution or timing tweak
+   * that works for this user specifically — distinct from `Recipe.notes`
+   * (an author-level note on the recipe's own content, shared with anyone
+   * who can see that recipe). Settable via the MCP server's
+   * update_recipe_note tool; see src/mcp/tools/update-recipe-note.ts.
+   */
+  recipeNote: string | null;
   /** Personal notes on individual steps, keyed by `Step.order`. */
   stepNotes: Record<number, string>;
   /**

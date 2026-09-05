@@ -16,6 +16,7 @@ import type { Ingredient, IngredientNote, Recipe, RecipeSource, Step, UserRecipe
 export const emptyUserRecipeState: UserRecipeState = {
   favorite: false,
   lastCookedAt: null,
+  recipeNote: null,
   stepNotes: {},
   ingredientNotes: {},
 };
@@ -49,6 +50,7 @@ function toUserRecipeState(row: UserRecipeStateRow | undefined): UserRecipeState
   return {
     favorite: row.favorite,
     lastCookedAt: row.lastCookedAt ? row.lastCookedAt.toISOString() : null,
+    recipeNote: row.recipeNote ?? null,
     stepNotes: row.stepNotes as Record<number, string>,
     ingredientNotes: row.ingredientNotes as Record<string, IngredientNote>,
   };
@@ -90,7 +92,9 @@ export async function getVisibleRecipe(userId: string, id: string): Promise<Reci
 async function upsertState(
   userId: string,
   recipeId: string,
-  patch: Partial<Pick<typeof userRecipeState.$inferInsert, "favorite" | "lastCookedAt" | "stepNotes" | "ingredientNotes">>
+  patch: Partial<
+    Pick<typeof userRecipeState.$inferInsert, "favorite" | "lastCookedAt" | "recipeNote" | "stepNotes" | "ingredientNotes">
+  >
 ): Promise<void> {
   await db
     .insert(userRecipeState)
@@ -126,6 +130,41 @@ export async function saveStepNote(userId: string, recipeId: string, stepOrder: 
     delete stepNotes[stepOrder];
   }
   await upsertState(userId, recipeId, { stepNotes });
+}
+
+export type RecipeNoteMode = "append" | "replace";
+
+/**
+ * Sets or extends the user's personal, whole-recipe note — the storage
+ * side of the MCP server's update_recipe_note tool
+ * (src/mcp/tools/update-recipe-note.ts). "append" (the default) adds
+ * `note` to whatever's already stored, on its own line, so a caller can
+ * never silently lose an existing note by mistake; "replace" is only for
+ * a caller that has already merged the new text with the existing note
+ * itself and is submitting the final, complete note. Returns the note as
+ * actually stored, so an "append" caller can see the combined result.
+ */
+export async function updateRecipeNote(
+  userId: string,
+  recipeId: string,
+  note: string,
+  mode: RecipeNoteMode = "append"
+): Promise<string> {
+  const trimmed = note.trim();
+
+  if (mode === "replace") {
+    await upsertState(userId, recipeId, { recipeNote: trimmed || null });
+    return trimmed;
+  }
+
+  const [stateRow] = await db
+    .select({ recipeNote: userRecipeState.recipeNote })
+    .from(userRecipeState)
+    .where(and(eq(userRecipeState.userId, userId), eq(userRecipeState.recipeId, recipeId)));
+  const existing = stateRow?.recipeNote?.trim();
+  const combined = existing ? `${existing}\n${trimmed}` : trimmed;
+  await upsertState(userId, recipeId, { recipeNote: combined });
+  return combined;
 }
 
 export interface NewRecipe {
