@@ -246,6 +246,28 @@ screen) — nothing in `services/`, `repositories/`, or `tools/` needs to
 change, because none of them ever see a token, only the already-resolved
 `McpRequestContext`.
 
+### Connecting Claude.ai's web "custom connector"
+
+claude.ai's "Add custom connector" form has no field for a static bearer
+token — its "Authentication" dropdown only offers "None" or a full OAuth
+flow, and this server only speaks personal access tokens. The fix isn't
+OAuth, though: the form also lets you attach an arbitrary **request
+header**, and a header is exactly how a bearer token is sent. So:
+
+1. Authentication: **None**.
+2. Add a request header named `authorization` (not the "Authorization"
+   dropdown/field, since there isn't one) with value `Bearer <token>` —
+   the value is sent verbatim, so the `Bearer ` prefix has to be typed in
+   by hand.
+
+Simmer's own **Settings** page walks a signed-in user through this
+directly (URL + the exact header name/value shape) right next to where
+they generate the token, so this doesn't have to be rediscovered per
+client. This is unrelated to CORS (see "What's intentionally not real
+yet" below) — the request still goes host-to-host, it's just that
+claude.ai's UI needed the token in a header field instead of a dedicated
+token field.
+
 ## Transport
 
 The transport is **Streamable HTTP**, mounted as a Next.js Route Handler
@@ -289,9 +311,11 @@ production-ready:
   but nothing yet pauses a `save_recipe` call for the user to confirm —
   see the "Reads and writes are marked differently" note above.
 - **CORS for browser-based remote clients.** The current generation of
-  Claude/ChatGPT remote-MCP connectors call server-to-server; a
-  browser-hosted MCP client would need CORS headers added to the route
-  handler.
+  Claude/ChatGPT remote-MCP connectors call server-to-server (including
+  claude.ai's web "custom connector" — see "Connecting Claude.ai's web
+  'custom connector'" above, which is a header-field UI limitation, not a
+  CORS issue); a browser-hosted MCP client would need CORS headers added
+  to the route handler.
 
 ## Example prompts
 

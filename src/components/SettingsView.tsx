@@ -19,11 +19,13 @@ export function SettingsView({
   tokens,
   preferences,
   members,
+  mcpUrl,
 }: {
   email: string;
   tokens: PersonalAccessTokenRow[];
   preferences: FoodPreferences;
   members: HouseholdMemberRow[];
+  mcpUrl: string;
 }) {
   const { locale, t } = useLocale();
   const router = useRouter();
@@ -42,6 +44,19 @@ export function SettingsView({
 
       <h2 className="section-title">{t.settings.tokens.heading}</h2>
       <p className="text-muted">{t.settings.tokens.subheading}</p>
+
+      <div className="setup-guide">
+        <h3 className="setup-guide__title">{t.settings.tokens.setupHeading}</h3>
+        <p>{t.settings.tokens.setupUrlLabel}</p>
+        <code className="setup-guide__url">{mcpUrl}</code>
+        <ol className="setup-guide__steps">
+          <li>{t.settings.tokens.setupStep1}</li>
+          <li>{t.settings.tokens.setupStep2}</li>
+          <li>{t.settings.tokens.setupStep3}</li>
+          <li>{t.settings.tokens.setupStep4}</li>
+        </ol>
+        <p className="text-muted">{t.settings.tokens.setupAllowAllNote}</p>
+      </div>
 
       <form
         onSubmit={async (e) => {

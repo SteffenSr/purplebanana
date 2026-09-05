@@ -119,6 +119,13 @@ export interface Dictionary {
     tokens: {
       heading: string;
       subheading: string;
+      setupHeading: string;
+      setupUrlLabel: string;
+      setupStep1: string;
+      setupStep2: string;
+      setupStep3: string;
+      setupStep4: string;
+      setupAllowAllNote: string;
       labelPlaceholder: string;
       generate: string;
       revoke: string;
@@ -288,6 +295,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
         heading: "Adgangstokens til MCP",
         subheading:
           "Et personligt token giver Claude, ChatGPT eller en anden MCP-klient adgang til dine Simmer-data. Indsæt det i klientens forbindelsesopsætning.",
+        setupHeading: "Sådan forbinder du Claude",
+        setupUrlLabel: "Brug denne URL som MCP-serverens adresse:",
+        setupStep1: "I Claude: gå til Indstillinger → Connectors → \"Add custom connector\".",
+        setupStep2: "Indsæt URL'en ovenfor, og vælg \"None\" under \"Authentication\".",
+        setupStep3:
+          "Under \"Request headers\" skal du tilføje én med navnet \"authorization\". Værdien sendes præcis som skrevet, så husk \"Bearer \" foran tokenet, f.eks. \"Bearer simmer_pat_...\".",
+        setupStep4: "Brug det token, du genererer nedenfor, som resten af værdien.",
+        setupAllowAllNote:
+          "Vil du have den nemmeste oplevelse, kan du give tilladelse til alle Simmers værktøjer, når Claude spørger.",
         labelPlaceholder: "f.eks. \"Claude på min bærbare\"",
         generate: "Generér token",
         revoke: "Tilbagekald",
@@ -455,6 +471,15 @@ export const dictionaries: Record<Locale, Dictionary> = {
         heading: "MCP access tokens",
         subheading:
           "A personal access token lets Claude, ChatGPT, or another MCP client reach your Simmer data. Paste it into the client's connector setup.",
+        setupHeading: "How to connect Claude",
+        setupUrlLabel: "Use this URL as the MCP server address:",
+        setupStep1: 'In Claude: go to Settings → Connectors → "Add custom connector".',
+        setupStep2: 'Paste the URL above, and choose "None" under "Authentication".',
+        setupStep3:
+          'Under "Request headers" add one named "authorization". The value is sent exactly as typed, so keep the "Bearer " prefix, e.g. "Bearer simmer_pat_...".',
+        setupStep4: "Use the token you generate below as the rest of the value.",
+        setupAllowAllNote:
+          "For the smoothest experience, allow all of Simmer's tools when Claude asks for permission.",
         labelPlaceholder: 'e.g. "Claude on my laptop"',
         generate: "Generate token",
         revoke: "Revoke",
