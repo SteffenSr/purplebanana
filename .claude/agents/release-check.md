@@ -21,7 +21,7 @@ order, and report the actual output rather than assuming success:
    in-memory fakes, no database required.
 
 Everything past this point needs a real `DATABASE_URL` (Postgres) and,
-for the web app, `RESEND_API_KEY`/`AUTH_SECRET` — env vars this repo's
+for the web app, `MAGIC_LINK_RESEND_API_KEY`/`AUTH_SECRET` — env vars this repo's
 sandboxed sessions typically don't have. When they're not available:
 say so explicitly rather than skipping silently, and note it as
 unverified rather than reporting a pass. When they are available (e.g. a

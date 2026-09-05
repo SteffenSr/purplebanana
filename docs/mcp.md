@@ -171,7 +171,7 @@ recipe and profile/meal-history data is invisible to another), and
 ## Environment variables
 
 See `.env.example` for the full list (shared with the rest of the app —
-`DATABASE_URL`, `AUTH_SECRET`, `RESEND_API_KEY`). MCP-specific:
+`DATABASE_URL`, `AUTH_SECRET`, `MAGIC_LINK_RESEND_API_KEY`). MCP-specific:
 
 | Variable | Used by | Purpose |
 |---|---|---|

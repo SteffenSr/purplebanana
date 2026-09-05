@@ -40,7 +40,7 @@ not anonymous per-device storage.
 
 ```
 vercel link                 # once, to connect this checkout to the Vercel project
-vercel env pull .env.local  # pulls DATABASE_URL, RESEND_API_KEY, AUTH_SECRET, etc.
+vercel env pull .env.local  # pulls DATABASE_URL, MAGIC_LINK_RESEND_API_KEY, AUTH_SECRET, etc.
 npm run db:migrate          # applies drizzle/ migrations
 npm run db:seed             # loads seed-recipes.ts as shared starter recipes
 npm run dev

@@ -13,9 +13,13 @@ import { accounts, sessions, users, verificationTokens } from "@/db/schema";
  * session, since passwordless sign-in depends on the adapter storing the
  * verification token and creating the session once it's used.
  *
- * EMAIL_FROM must be a sender Resend is allowed to send from — either a
- * domain you've verified in the Resend dashboard, or their sandbox address
- * `onboarding@resend.dev` for testing before that's set up.
+ * The Resend Vercel Marketplace integration names its env vars after
+ * whatever you called the connection when installing it (here,
+ * "magic_link") rather than a fixed `RESEND_API_KEY` — see
+ * `MAGIC_LINK_RESEND_API_KEY`/`MAGIC_LINK_RESEND_EMAIL_DOMAIN` below and
+ * `.env.example`. `MAGIC_LINK_RESEND_EMAIL_DOMAIN` is a domain Resend is
+ * verified to send from, not a full address; falls back to Resend's
+ * `onboarding@resend.dev` sandbox sender if that domain isn't set yet.
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -27,8 +31,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "database" },
   providers: [
     Resend({
-      apiKey: process.env.RESEND_API_KEY,
-      from: process.env.EMAIL_FROM ?? "Simmer <onboarding@resend.dev>",
+      apiKey: process.env.MAGIC_LINK_RESEND_API_KEY,
+      from: process.env.MAGIC_LINK_RESEND_EMAIL_DOMAIN
+        ? `Simmer <login@${process.env.MAGIC_LINK_RESEND_EMAIL_DOMAIN}>`
+        : "Simmer <onboarding@resend.dev>",
     }),
   ],
   pages: {
