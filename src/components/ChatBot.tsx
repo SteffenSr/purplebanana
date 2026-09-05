@@ -11,9 +11,11 @@ interface ChatMessage {
 /**
  * Full-screen chat experience for "Nomi", the recipe assistant experiment
  * (src/app/experiments/chatbot). Talks to the /api/chat serverless
- * function (api/chat.ts, deployed separately from this statically exported
- * app — see docs/architecture.md) which runs the OpenAI Agents SDK, or
- * returns a mocked reply until an API key is configured.
+ * function (api/chat.ts, a root-level Vercel Function deployed alongside
+ * this Next.js app rather than a route handler under src/app/api — see
+ * docs/architecture.md's "Recipe chatbot (Nomi) backend" section for why)
+ * which runs the OpenAI Agents SDK, or returns a mocked reply until an API
+ * key is configured.
  */
 export function ChatBot() {
   const { locale, t } = useLocale();
@@ -45,11 +47,11 @@ export function ChatBot() {
     setSending(true);
 
     try {
-      // Trailing slash to match next.config.ts's trailingSlash: true and
-      // avoid an extra 308 redirect hop (Vercel's routing applies that
-      // redirect to every path on this deployment, this Vercel Function
-      // included, not just Next's own pages).
-      const res = await fetch("/api/chat/", {
+      // No trailing slash: next.config.ts no longer sets trailingSlash:
+      // true (removed so external MCP clients hitting /api/mcp don't get
+      // a 308 they won't follow), and the bare path is Next's default
+      // canonical form — using it here avoids an extra redirect hop.
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, history: nextMessages, locale }),

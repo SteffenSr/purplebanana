@@ -297,12 +297,18 @@ turned out to be wrong:
   `tsconfig.json` aren't loaded via Node's own CommonJS resolution at
   all).
 
-**`next.config.ts`'s `trailingSlash: true` applies to this function too,**
-not just Next's own pages — a `POST /api/chat` gets a `308` redirect to
-`/api/chat/` before it reaches the function at all. `fetch()` follows a
-`308` transparently (it preserves the method and body, unlike `301`/`302`),
-so this isn't actually broken, but `ChatBot.tsx` calls `/api/chat/`
-directly to skip the redirect round trip.
+**`next.config.ts`'s trailing-slash setting applies to this function too,**
+not just Next's own pages — Vercel bakes one canonical form into the whole
+deployment's routing, standalone functions included. This app no longer
+sets `trailingSlash: true` (removed once it broke external MCP clients
+hitting `/api/mcp` — see docs/mcp.md's "Transport" section — since a `308`
+redirect there isn't reliably followed on a `POST`), which flips the
+canonical form to the bare path: a request to `/api/chat/` now gets a
+`308` to `/api/chat`, the reverse of before. `fetch()` follows a `308`
+transparently (it preserves the method and body, unlike `301`/`302`), so
+neither direction is actually broken, but `ChatBot.tsx` calls `/api/chat`
+(no trailing slash) directly to match the current canonical form and
+skip the redirect round trip.
 
 **Preview deployments can sit behind Vercel Deployment Protection
 (SSO)**, which intercepts every request — page and function alike —
