@@ -386,6 +386,7 @@ button {
    --------------------------------------------------------------------- */
 .recipe-hero {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--space-4);
   margin-bottom: var(--space-4);
@@ -393,6 +394,17 @@ button {
 
 .recipe-hero__emoji {
   font-size: 4rem;
+}
+
+.recipe-hero__info {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.recipe-hero__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
 }
 
 .recipe-hero-image {

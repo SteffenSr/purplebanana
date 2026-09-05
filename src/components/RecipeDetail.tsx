@@ -55,27 +55,29 @@ export function RecipeDetail({ recipe }: { recipe: RecipeWithState | undefined }
             {recipe.emoji}
           </span>
         )}
-        <div>
+        <div className="recipe-hero__info">
           <h1>{recipe.title[locale]}</h1>
           <p className="text-muted">{recipe.description[locale]}</p>
         </div>
-        {recipe.state.recipeNote && (
-          <a href={`/recipes/${recipe.id}/note/`} className="btn btn-icon" aria-label={t.recipeDetail.viewNote}>
-            📝
-          </a>
-        )}
-        <button
-          type="button"
-          className="btn btn-icon"
-          aria-label={recipe.state.favorite ? t.recipeCard.removeFavorite : t.recipeCard.addFavorite}
-          aria-pressed={recipe.state.favorite}
-          onClick={async () => {
-            await toggleFavoriteAction(recipe.id);
-            router.refresh();
-          }}
-        >
-          {recipe.state.favorite ? "⭐" : "☆"}
-        </button>
+        <div className="recipe-hero__actions">
+          {recipe.state.recipeNote && (
+            <a href={`/recipes/${recipe.id}/note/`} className="btn btn-icon" aria-label={t.recipeDetail.viewNote}>
+              📝
+            </a>
+          )}
+          <button
+            type="button"
+            className="btn btn-icon"
+            aria-label={recipe.state.favorite ? t.recipeCard.removeFavorite : t.recipeCard.addFavorite}
+            aria-pressed={recipe.state.favorite}
+            onClick={async () => {
+              await toggleFavoriteAction(recipe.id);
+              router.refresh();
+            }}
+          >
+            {recipe.state.favorite ? "⭐" : "☆"}
+          </button>
+        </div>
       </div>
 
       <div className="badge-row">
