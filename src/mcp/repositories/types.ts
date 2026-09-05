@@ -1,4 +1,11 @@
-import type { FoodProfile, MealHistoryEntry, MealHistoryQuery, NewRecipeInput, SimmerRecipe } from "../domain/types";
+import type {
+  FoodProfile,
+  MealHistoryEntry,
+  MealHistoryQuery,
+  NewRecipeInput,
+  RecipeSummary,
+  SimmerRecipeView,
+} from "../domain/types";
 
 /**
  * Repository interfaces the MCP services depend on. Each dev implementation
@@ -19,9 +26,9 @@ export interface RecipeSearchOptions {
 }
 
 export interface RecipeRepository {
-  search(userId: string, options: RecipeSearchOptions): Promise<SimmerRecipe[]>;
-  getById(userId: string, id: string): Promise<SimmerRecipe | undefined>;
-  create(userId: string, input: NewRecipeInput): Promise<SimmerRecipe>;
+  search(userId: string, options: RecipeSearchOptions): Promise<RecipeSummary[]>;
+  getById(userId: string, id: string): Promise<SimmerRecipeView | undefined>;
+  create(userId: string, input: NewRecipeInput): Promise<SimmerRecipeView>;
 }
 
 export interface MealHistoryRepository {

@@ -1,4 +1,4 @@
-import { toRecipeSummary, type NewRecipeInput, type RecipeSummary, type SimmerRecipe } from "../domain/types";
+import type { NewRecipeInput, RecipeSummary, SimmerRecipeView } from "../domain/types";
 import { NotFoundError } from "../errors";
 import type { RecipeRepository, RecipeSearchOptions } from "../repositories/types";
 
@@ -10,20 +10,19 @@ export interface SavedRecipeResult {
 
 /**
  * Application service between the recipe tools (search_recipes, get_recipe,
- * save_recipe) and the RecipeRepository. This is the one place that knows
- * search_recipes must never return full ingredients/instructions — the
- * repository returns full SimmerRecipe objects, and it's this service's job
- * to project them down to RecipeSummary before they reach a tool response.
+ * save_recipe) and the RecipeRepository. The repository already returns
+ * search_recipes results as compact RecipeSummary objects (never full
+ * ingredients/instructions) — this layer's job is turning a missing recipe
+ * into the tool-facing NotFoundError, not reshaping data.
  */
 export class RecipeService {
   constructor(private readonly repository: RecipeRepository) {}
 
   async search(userId: string, options: RecipeSearchOptions): Promise<RecipeSummary[]> {
-    const recipes = await this.repository.search(userId, options);
-    return recipes.map(toRecipeSummary);
+    return this.repository.search(userId, options);
   }
 
-  async getById(userId: string, id: string): Promise<SimmerRecipe> {
+  async getById(userId: string, id: string): Promise<SimmerRecipeView> {
     const recipe = await this.repository.getById(userId, id);
     if (!recipe) {
       throw new NotFoundError(`No recipe found with id "${id}". Use search_recipes to find a valid id.`);

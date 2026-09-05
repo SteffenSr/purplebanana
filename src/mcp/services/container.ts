@@ -1,6 +1,6 @@
-import { InMemoryFoodProfileRepository } from "../repositories/memory-food-profile-repository";
-import { InMemoryMealHistoryRepository } from "../repositories/memory-meal-history-repository";
-import { InMemoryRecipeRepository } from "../repositories/memory-recipe-repository";
+import { DrizzleFoodProfileRepository } from "../repositories/drizzle-food-profile-repository";
+import { DrizzleMealHistoryRepository } from "../repositories/drizzle-meal-history-repository";
+import { DrizzleRecipeRepository } from "../repositories/drizzle-recipe-repository";
 import { FoodProfileService } from "./food-profile-service";
 import { MealHistoryService } from "./meal-history-service";
 import { RecipeService } from "./recipe-service";
@@ -12,17 +12,17 @@ export interface ServiceContainer {
 }
 
 /**
- * Wires repositories to services once per process. Both transports
- * (http.ts, stdio.ts) build one of these at startup and hand it to every
- * MCP server instance they create, so the in-memory repositories' state
- * (recipes saved via save_recipe, in particular) persists across requests
- * for the lifetime of the process — swap the repository constructors here
- * for real ones later without touching services/ or tools/.
+ * Wires production (Postgres-backed) repositories to services. Both the
+ * app/api/mcp route handler and src/mcp/stdio.ts build one of these at
+ * startup and hand it to every MCP server instance they create. Tests use
+ * the in-memory repositories directly (src/mcp/__tests__/) rather than
+ * this container, so they never need a database connection — see
+ * src/mcp/repositories/memory-*.ts.
  */
 export function createServiceContainer(): ServiceContainer {
-  const recipeRepository = new InMemoryRecipeRepository();
-  const mealHistoryRepository = new InMemoryMealHistoryRepository();
-  const foodProfileRepository = new InMemoryFoodProfileRepository();
+  const recipeRepository = new DrizzleRecipeRepository();
+  const mealHistoryRepository = new DrizzleMealHistoryRepository();
+  const foodProfileRepository = new DrizzleFoodProfileRepository();
 
   return {
     foodProfileService: new FoodProfileService(foodProfileRepository),

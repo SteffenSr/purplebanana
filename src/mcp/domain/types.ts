@@ -1,14 +1,14 @@
-import type { LocalizedText, Recipe } from "../../lib/types";
+import type { Recipe, RecipeSource, UserRecipeState } from "../../lib/types";
 
 /**
- * Domain types for the Simmer MCP server. These are deliberately separate
- * from the app's IndexedDB-shaped `Recipe` (src/lib/types.ts): that type is
- * bilingual and browser-only (see src/lib/db.ts), while recipes created
- * through the MCP server (by an AI assistant, on the user's behalf) arrive
- * in whatever single language the conversation was in and have no local
- * device to be stored on. `fromAppRecipe` below is the one place that
- * bridges the two, for exposing the bundled seed recipes through the same
- * tools. See docs/mcp.md's "Architecture" section.
+ * Domain types for the Simmer MCP server. Recipe storage itself is NOT
+ * duplicated here — `Recipe`/`UserRecipeState` (src/lib/types.ts) are the
+ * one canonical shape, shared with the app's own pages via
+ * src/lib/recipes-db.ts. What lives here is the MCP-specific *view* of
+ * that data (flattened to one language, since a tool response goes to an
+ * LLM, not a bilingual UI — see `toRecipeSummary`/`toSimmerRecipeView`
+ * below) plus the domains with no existing app model to unify with:
+ * food profile, household members, meal history.
  */
 
 export type RecipeLocale = "da" | "en";
@@ -29,48 +29,36 @@ export interface FoodProfile {
   householdMembers: HouseholdMember[];
 }
 
-export interface SimmerIngredient {
-  name: string;
-  amount?: number;
-  unit?: string;
-}
-
-export interface RecipeSource {
-  type: "user" | "url" | "ai" | "other";
-  value?: string;
-}
-
-/** A recipe as stored/returned by the MCP layer — the full detail shape. */
-export interface SimmerRecipe {
-  id: string;
-  userId: string;
-  title: string;
-  description?: string;
-  servings?: number;
-  ingredients: SimmerIngredient[];
-  instructions: string[];
-  tags: string[];
-  notes?: string;
-  source?: RecipeSource;
-  lastCookedAt?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
 /** Compact projection returned by search_recipes — never full ingredients/instructions. */
 export interface RecipeSummary {
   id: string;
   title: string;
   description?: string;
   tags: string[];
-  lastCookedAt?: string | null;
+  lastCookedAt: string | null;
 }
 
+/** Full single-locale view returned by get_recipe and by save_recipe's storage layer. */
+export interface SimmerRecipeView {
+  id: string;
+  title: string;
+  description?: string;
+  servings?: number;
+  ingredients: Array<{ name: string; amount?: number; unit?: string }>;
+  instructions: string[];
+  notes?: string;
+  tags: string[];
+  source?: RecipeSource;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** save_recipe's input shape — see src/mcp/schemas.ts for the zod validation of this. */
 export interface NewRecipeInput {
   title: string;
   description?: string;
   servings?: number;
-  ingredients: SimmerIngredient[];
+  ingredients: Array<{ name: string; amount?: number; unit?: string }>;
   instructions: string[];
   tags?: string[];
   notes?: string;
@@ -111,42 +99,37 @@ export interface MealHistoryQuery {
   query?: string;
 }
 
-function localize(text: LocalizedText, locale: RecipeLocale): string {
+function localize(text: { da: string; en: string }, locale: RecipeLocale): string {
   return text[locale] || text.da || text.en;
 }
 
-/**
- * Projects a bundled app Recipe (bilingual, from seed-recipes.ts) into the
- * flat SimmerRecipe shape the MCP tools expose. Seed-recipe ingredient
- * lines combine amount+unit+name into one localized string (e.g. "200 g
- * røde linser"), so `amount`/`unit` stay undefined here rather than
- * guessed by parsing free text — only recipes saved through save_recipe
- * carry structured amount/unit.
- */
-export function fromAppRecipe(recipe: Recipe, userId: string, locale: RecipeLocale = "da"): SimmerRecipe {
-  const sortedSteps = [...recipe.steps].sort((a, b) => a.order - b.order);
+export function toRecipeSummary(recipe: Recipe, state: UserRecipeState, locale: RecipeLocale = "da"): RecipeSummary {
   return {
     id: recipe.id,
-    userId,
     title: localize(recipe.title, locale),
     description: localize(recipe.description, locale),
-    servings: recipe.servings,
-    ingredients: recipe.ingredients.map((ingredient) => ({ name: localize(ingredient.text, locale) })),
-    instructions: sortedSteps.map((step) => localize(step.instruction, locale)),
     tags: recipe.tags,
-    source: { type: "other", value: "simmer-app-recipe" },
-    lastCookedAt: recipe.lastCookedAt ?? null,
-    createdAt: recipe.updatedAt,
-    updatedAt: recipe.updatedAt,
+    lastCookedAt: state.lastCookedAt,
   };
 }
 
-export function toRecipeSummary(recipe: SimmerRecipe): RecipeSummary {
+export function toSimmerRecipeView(recipe: Recipe, locale: RecipeLocale = "da"): SimmerRecipeView {
+  const sortedSteps = [...recipe.steps].sort((a, b) => a.order - b.order);
   return {
     id: recipe.id,
-    title: recipe.title,
-    description: recipe.description,
+    title: localize(recipe.title, locale),
+    description: localize(recipe.description, locale),
+    servings: recipe.servings,
+    ingredients: recipe.ingredients.map((ingredient) => ({
+      name: localize(ingredient.text, locale),
+      amount: ingredient.amount,
+      unit: ingredient.unit,
+    })),
+    instructions: sortedSteps.map((step) => localize(step.instruction, locale)),
+    notes: recipe.notes,
     tags: recipe.tags,
-    lastCookedAt: recipe.lastCookedAt ?? null,
+    source: recipe.source,
+    createdAt: recipe.createdAt,
+    updatedAt: recipe.updatedAt,
   };
 }

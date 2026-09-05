@@ -18,9 +18,8 @@ assistant's job; Simmer only needs to be expert in Simmer's own data.
 MCP client (Claude, ChatGPT, MCP Inspector, ...)
        │  Streamable HTTP (remote) or stdio (local dev)
        ▼
-Simmer MCP server           src/mcp/
-  transports: http.ts, stdio.ts
-  auth.ts                    → resolves McpRequestContext { userId }
+app/api/mcp/route.ts        a Vercel Function, same deployment as the app
+  auth.ts                    → resolves McpRequestContext { userId } from a personal access token
   server.ts                  → registers the 5 tools below
   tools/*.ts                 → thin: parse input, call a service, shape output
        │
@@ -30,40 +29,39 @@ Simmer application services  src/mcp/services/*.ts
   (validation via zod schemas.ts; all domain rules live here, not in tools/)
        │
        ▼
-Repositories                 src/mcp/repositories/*.ts
-  FoodProfileRepository, RecipeRepository, MealHistoryRepository
-  — interfaces in types.ts, dev implementations are in-memory,
-    always scoped by userId
+Repositories                 src/mcp/repositories/drizzle-*.ts
+  DrizzleFoodProfileRepository, DrizzleRecipeRepository, DrizzleMealHistoryRepository
+  — interfaces in repositories/types.ts, each a thin wrapper over the
+    same src/lib/*-db.ts modules the app's own pages use
+       │
+       ▼
+Postgres (src/db/schema.ts) — see docs/architecture.md
 ```
 
-The **only** existing part of the app this reuses directly is
-`src/lib/types.ts` (`Recipe`, `Ingredient`, `Step`, `LocalizedText`) and the
-actual bundled content in `src/lib/seed-recipes.ts` — `fromAppRecipe()` in
-`src/mcp/domain/types.ts` is the one place that converts a bilingual seed
-`Recipe` into the flat shape the MCP tools expose (picking one locale,
-default Danish). Everything else here (`FoodProfile`, `MealHistoryEntry`,
-the repositories, the services) is new: as `AGENTS.md`/`docs/architecture.md`
-explain, Simmer today has **no server at all** — `next.config.ts` sets
-`output: "export"` and the only "database" is the browser's own IndexedDB
-(`src/lib/db.ts`, via Dexie). That store only exists inside one browser and
-can't be reached from a Node process, so it isn't — and can't be — the
-backing store for this server. See "What's intentionally not real yet"
-below for what that means in practice.
+This MCP server does **not** duplicate the app's own data model. `Recipe`,
+`Ingredient`, `Step`, `LocalizedText`, and `UserRecipeState`
+(`src/lib/types.ts`) are the one canonical shape, stored in Postgres and
+read/written by `src/lib/recipes-db.ts` — the exact module the app's own
+Server Components and Server Actions call. `src/mcp/domain/types.ts` adds
+only the MCP-specific *view* of that data: `toRecipeSummary`/
+`toSimmerRecipeView` flatten a bilingual `Recipe` down to one language,
+since a tool response goes to an LLM, not a bilingual UI. `FoodProfile`,
+`HouseholdMember`, and `MealHistoryEntry` have no competing app-side model
+to unify with — they're new, but still go through shared
+`src/lib/food-profile-db.ts` / `meal-history-db.ts` modules the account
+settings page also uses (see docs/architecture.md).
 
 ### Two tiers of recipe data
 
-`InMemoryRecipeRepository` (`src/mcp/repositories/memory-recipe-repository.ts`)
-mirrors how this will eventually work for real:
+- Simmer's bundled starter recipes (`seed-recipes.ts`, loaded once via
+  `npm run db:seed`) are **shared and read-only** — `ownerId: null` rows,
+  visible to every user, same as in the app itself.
+- Recipes created through `save_recipe` are **private to the `userId`
+  that created them** (`ownerId` set to that user).
 
-- Simmer's bundled starter recipes (`seed-recipes.ts`) are **shared and
-  read-only** — shipped app content, visible to every user, same as they are
-  in the app itself.
-- Recipes created through `save_recipe` are **private to the `userId` that
-  created them.**
-
-A recipe saved through the MCP server does **not** appear in that user's
-actual Simmer app (their browser's IndexedDB) — there is no shared backend
-yet for the two to sync through. See "Production TODO" below.
+A recipe saved through the MCP server **does** appear in that user's own
+Simmer app immediately — both read from the same Postgres tables, unlike
+the very first iteration of this server (in-memory, no shared backend).
 
 ## Tools
 
@@ -94,7 +92,8 @@ tools).
 `get_meal_history`'s `MealHistoryEntry` type (`src/mcp/domain/types.ts`)
 already carries optional `guests`, `occasion`, and `feedback` fields, so
 that metadata can start being populated later without a breaking API
-change.
+change. There is no "log a meal" UI in the app yet, so `meal_history` rows
+only exist if inserted directly — see "What's intentionally not real yet."
 
 ### Errors
 
@@ -111,36 +110,42 @@ validation errors are what a client sees for a bad `save_recipe` call.
 
 ```bash
 npm install
+vercel env pull .env.local   # once — see docs/architecture.md's "Local setup"
+npm run db:migrate
+npm run db:seed
 
-# stdio — for a local MCP Inspector or a desktop client on this machine
+npm run dev
+# → the MCP server is live at http://localhost:3000/api/mcp, alongside the app
+
+# stdio — for a local MCP Inspector or a desktop client, no HTTP server needed
 npm run mcp:stdio
-
-# Streamable HTTP — the transport for remote clients (see "Transport" below)
-npm run mcp:http
-# → Simmer MCP server (Streamable HTTP) listening on http://localhost:3939/mcp
 ```
 
-`PORT` overrides the HTTP port (default `3939`).
-
 ## Testing it with an MCP client
+
+You'll need a personal access token first — sign in to the app, go to
+**Settings**, and generate one under "MCP access tokens" (see
+"Authentication" below).
 
 **MCP Inspector** (the official test client) is the fastest way to poke at
 every tool by hand:
 
 ```bash
-npx @modelcontextprotocol/inspector npx tsx src/mcp/http.ts
+npx @modelcontextprotocol/inspector
 ```
 
-Point the Inspector at `http://localhost:3939/mcp` with transport
-"Streamable HTTP", or run `npx @modelcontextprotocol/inspector npx tsx
-src/mcp/stdio.ts` to test over stdio instead. From the Inspector's "Tools"
-tab you can call each of the five tools directly and see raw
-request/response JSON.
+Point it at `http://localhost:3000/api/mcp` with transport "Streamable
+HTTP" and an `Authorization: Bearer <your token>` header, or run
+`npx @modelcontextprotocol/inspector npx tsx src/mcp/stdio.ts` to test
+over stdio instead (no token needed locally — see "Authentication"). From
+the Inspector's "Tools" tab you can call each of the five tools directly
+and see raw request/response JSON.
 
 **curl**, for a quick manual check of the HTTP transport:
 
 ```bash
-curl -s http://localhost:3939/mcp \
+curl -s http://localhost:3000/api/mcp \
+  -H "Authorization: Bearer <your token>" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"test","version":"0.0.1"}}}'
@@ -148,11 +153,10 @@ curl -s http://localhost:3939/mcp \
 
 then, using the same session, a `tools/call` request with
 `"method":"tools/call","params":{"name":"search_recipes","arguments":{"query":"dal"}}`.
-Add `-H "Authorization: Bearer <token>"` to test as a specific dev user —
-see "Authentication" below.
 
 **Automated tests** (`node --test`, run via `tsx`, no separate test
-framework dependency):
+framework dependency, no database required — they run entirely against
+the in-memory fakes in `src/mcp/repositories/memory-*.ts`):
 
 ```bash
 npm run test:mcp
@@ -166,16 +170,24 @@ recipe and profile/meal-history data is invisible to another), and
 
 ## Environment variables
 
+See `.env.example` for the full list (shared with the rest of the app —
+`DATABASE_URL`, `AUTH_SECRET`, `RESEND_API_KEY`). MCP-specific:
+
 | Variable | Used by | Purpose |
 |---|---|---|
-| `PORT` | `http.ts` | HTTP port (default `3939`). |
-| `SIMMER_MCP_DEV_USER_ID` | `auth.ts` | userId used when no `Authorization` header is sent (stdio always, HTTP when the client omits it). Defaults to `"dev-user"`, which is also the id the seeded example food profile and meal history belong to. |
-| `SIMMER_MCP_DEV_TOKENS` | `auth.ts` | Comma-separated `token:userId` pairs (e.g. `tok-anna:user-anna,tok-bo:user-bo`) mapping a dev bearer token to a userId over HTTP. |
+| `SIMMER_MCP_DEV_USER_ID` | `auth.ts`, `stdio.ts` | userId used when no `Authorization` header is sent. Only takes effect outside production (`NODE_ENV !== "production"`) — see "Authentication". Defaults to `"dev-user"`. |
 
 ## Authentication
 
-This iteration does **not** implement OAuth/OIDC. What it does implement is
-the shape real auth needs to slot into, in `src/mcp/auth.ts`:
+Claude/ChatGPT authenticate with a **personal access token** — a
+long-lived bearer token a signed-in user generates from **Settings** in
+the app (`src/app/settings/`, via `src/lib/personal-access-tokens-db.ts`).
+This is deliberately not full OAuth 2.1 — see "What's intentionally not
+real yet" below — but it is real: tokens are per-user, hashed at rest
+(sha256, never the raw value), revocable, and every repository/service
+call takes the resolved `userId` explicitly rather than reading it from
+ambient state, so a request authenticated as one user can never see
+another's — see the isolation tests in `src/mcp/__tests__/isolation.test.ts`.
 
 ```ts
 export interface McpRequestContext {
@@ -183,108 +195,95 @@ export interface McpRequestContext {
 }
 ```
 
-Every repository and service method takes `userId` explicitly (never reads
-it from ambient/global state), so a request authenticated as one user can
-never see another's data — see the isolation tests in
-`src/mcp/__tests__/isolation.test.ts` and the isolation section of the
-architecture diagram above.
+`resolveUserIdFromHeaders()` (`src/mcp/auth.ts`) reads an
+`Authorization: Bearer <token>` header, hashes it, and looks it up against
+the `personal_access_token` table. With no `Authorization` header at all,
+it falls back to `SIMMER_MCP_DEV_USER_ID` (default `dev-user`) — but
+**only** when `NODE_ENV !== "production"`, so that convenience can never
+silently become an open door on a real deployment. `resolveUserIdForStdio()`
+does the equivalent for stdio, which has no HTTP headers and is local-dev
+only regardless. Neither function ever logs the raw token or header value —
+only the resolved `userId`, or that resolution failed.
 
-**In development**, `resolveUserIdFromHeaders()` reads an
-`Authorization: Bearer <token>` header and looks `token` up in a static map
-from `SIMMER_MCP_DEV_TOKENS`; with no `Authorization` header at all it falls
-back to `SIMMER_MCP_DEV_USER_ID` (default `dev-user`) so a client can connect
-with zero setup. `resolveUserIdForStdio()` does the equivalent for stdio,
-which has no HTTP headers. Neither of these ever logs the header value or
-token itself — only the resolved `userId`, or that resolution failed.
-
-**In production**, `resolveUserIdFromHeaders()` is the *only* function that
-needs to change: replace its body with real bearer-token verification (e.g.
-validate a JWT's signature and issuer against Simmer's identity provider,
-then use its `sub` claim as `userId`) or an OAuth 2.1 flow per the MCP
-authorization spec. Nothing in `services/`, `repositories/`, or `tools/`
-needs to change, because none of them ever see a token — only the
-already-resolved `McpRequestContext`.
+**Upgrading to full OAuth 2.1** later (so Claude.ai/ChatGPT's connector UI
+can show a hosted "Sign in to Simmer" screen instead of pasting a token)
+only touches `resolveUserIdFromHeaders()` and adds new routes
+(authorization + token endpoints, dynamic client registration, a consent
+screen) — nothing in `services/`, `repositories/`, or `tools/` needs to
+change, because none of them ever see a token, only the already-resolved
+`McpRequestContext`.
 
 ## Transport
 
-The primary transport is **Streamable HTTP** (`src/mcp/http.ts`) — the
-current recommended transport for a remote MCP server reachable from
-Claude, ChatGPT, or any other client over the internet. It's run in
-**stateless mode** (`sessionIdGenerator: undefined`): every request builds a
-fresh `McpServer` and transport, connects them, and tears them down when the
-response closes. There's no server-side session to expire, scale, or leak —
-the tradeoff is that MCP features that assume a long-lived session (e.g.
+The transport is **Streamable HTTP**, mounted as a Next.js Route Handler
+at `app/api/mcp/route.ts` — a Vercel Function in the same deployment as
+the rest of the app, using the MCP SDK's
+`WebStandardStreamableHTTPServerTransport` (fetch `Request`/`Response`
+based, not the Node-`http` version) since that's what a Route Handler
+speaks. It runs in **stateless mode** (`sessionIdGenerator: undefined`):
+every request builds a fresh `McpServer` and transport, connects them, and
+lets them go once the response is sent. There's no server-side session to
+expire, scale, or leak across Vercel's stateless function instances — the
+tradeoff is that MCP features assuming a long-lived session (e.g.
 server-initiated notifications between calls) aren't available, which is
 fine for five request/response tools like these.
 
-**stdio** (`src/mcp/stdio.ts`) is also implemented, for local development —
-so it's easy to point an MCP Inspector or a desktop client at the server
-without also running an HTTP listener — but it is not the primary or only
-transport, per the brief.
+**stdio** (`src/mcp/stdio.ts`) is also implemented, for local development
+— so it's easy to point an MCP Inspector or a desktop client at the
+server without also running the Next.js dev server — but it is not the
+primary or only transport.
 
 ## What's intentionally not real yet
 
-Deliberately out of scope for this iteration (see the task brief): mail/
-calendar integration, Siri/App Intents, the "Nomi" agent, a vector database/
-RAG layer, a recommendation engine, an OAuth consent screen, and MCP
-prompts/a resource system the tools don't actually need. Beyond those,
-before this is production-ready:
+Deliberately out of scope (see the original brief): mail/calendar
+integration, Siri/App Intents, the "Nomi" agent, a vector database/RAG
+layer, a recommendation engine, and MCP prompts/a resource system the
+tools don't actually need. Beyond those, before this is fully
+production-ready:
 
-- **A real, shared persistence layer.** `InMemoryRecipeRepository`,
-  `InMemoryFoodProfileRepository`, and `InMemoryMealHistoryRepository` all
-  lose their data on process restart and only exist for this process — they
-  are the "simple development implementation" the brief asked for, sitting
-  behind the `FoodProfileRepository` / `RecipeRepository` /
-  `MealHistoryRepository` interfaces in `src/mcp/repositories/types.ts` so a
-  real database-backed implementation can be substituted there without
-  touching `services/` or `tools/`.
-- **Reconciling this server's recipe store with the app's IndexedDB.**
-  Today a recipe saved via `save_recipe` lives only in this server's memory
-  and never reaches the saving user's actual Simmer app on their device (or
-  vice versa) — there is no shared backend yet for the static-export app and
-  this server to both read from. Building that shared store (and a sync
-  story for the app) is a separate, larger project than this MCP server.
-- **Real OAuth/OIDC**, as described above.
-- **Structured meal-history capture.** Today the app only tracks
-  `Recipe.lastCookedAt` (a single timestamp per device, per recipe, in
-  IndexedDB) — there's no date-addressable "what did I cook and when," so
-  `get_meal_history`'s dev repository is fixture data, not derived from
-  anything the app actually records yet.
+- **Full OAuth 2.1**, as described above — personal access tokens are a
+  deliberate, smaller step for now.
+- **A "log a meal" UI.** `get_meal_history` and the underlying
+  `meal_history`/`meal_history_recipe` tables exist, but nothing in the
+  app writes to them yet (`markCooked` only stamps
+  `user_recipe_state.lastCookedAt`, not a date-addressable meal record).
+  Until that UI exists, meal-history rows only exist if inserted directly.
 - **Rate limiting / abuse protection** and **structured audit logging**
   for the write path (`save_recipe`), separate from the "never log
-  credentials" rule already followed in `auth.ts` and the transports.
+  credentials" rule already followed in `auth.ts`.
 - **Explicit write-confirmation flow.** The read/write distinction
-  (`annotations.readOnlyHint`, `save_recipe`'s description) is in place, but
-  nothing yet pauses a `save_recipe` call for the user to confirm — see the
-  "Reads and writes are marked differently" note above.
-- **CORS / browser-based remote clients.** The HTTP transport assumes a
-  server-to-server caller (how the current generation of Claude/ChatGPT
-  remote-MCP connectors operate); a browser-hosted MCP client would need
-  CORS headers added to `http.ts`.
+  (`annotations.readOnlyHint`, `save_recipe`'s description) is in place,
+  but nothing yet pauses a `save_recipe` call for the user to confirm —
+  see the "Reads and writes are marked differently" note above.
+- **CORS for browser-based remote clients.** The current generation of
+  Claude/ChatGPT remote-MCP connectors call server-to-server; a
+  browser-hosted MCP client would need CORS headers added to the route
+  handler.
 
 ## Example prompts
 
-Once connected (e.g. via MCP Inspector, or a client configured against
-`http://localhost:3939/mcp` with a dev token), these should work end to end
-against the seeded dev data:
+Once you've signed in, generated a personal access token in Settings, and
+connected an MCP client with it, these work end to end:
 
 1. **"Find three of my saved recipes that the kids usually like."**
-   → `get_food_profile` (to see the household members and what they like) →
-   `search_recipes` (e.g. by the tags those members like) → the assistant
-   picks and names three.
+   → `get_food_profile` (add household members and their likes/dislikes
+   in Settings first, if you haven't) → `search_recipes` (e.g. by tags
+   those members like) → the assistant picks and names three.
 2. **"I had Karen over around August 17th. Which dishes did I make around
    then?"**
    → `get_meal_history({ from: "2026-08-10", to: "2026-08-24" })` or
-   `get_meal_history({ query: "Karen" })` — both match the seeded
-   `2026-08-17` entry and resolve to `red-lentil-dal` and
-   `coconut-spinach-dal`.
+   `get_meal_history({ query: "Karen" })` — returns whatever meal-history
+   rows exist in that range (see "What's intentionally not real yet": you
+   may need to insert a row directly until a "log a meal" UI exists).
 3. **"Save the recipe we just made together in Simmer."**
    → `save_recipe({ title, ingredients, instructions, source: { type: "ai" }, ... })`
    using whatever the assistant and user had just worked out in the
-   conversation.
+   conversation — then check the app's own recipe list, where it now
+   shows up too.
 
 The brief's own definition-of-done sequence also works as written:
 `search_recipes({ query: "linser" })` (Danish for lentils — matches
-`red-lentil-dal` and `coconut-spinach-dal` by ingredient text) → "show me
-number 2" → `get_recipe({ id: "coconut-spinach-dal" })` → "here's a new
-recipe, save it" → `save_recipe(...)`.
+`red-lentil-dal` and `coconut-spinach-dal` by ingredient text, once
+`npm run db:seed` has loaded the starter recipes) → "show me number 2" →
+`get_recipe({ id: "coconut-spinach-dal" })` → "here's a new recipe, save
+it" → `save_recipe(...)`.

@@ -1,8 +1,13 @@
 import { seedRecipes as appSeedRecipes } from "../../lib/seed-recipes";
-import { fromAppRecipe, type NewRecipeInput, type SimmerRecipe } from "../domain/types";
+import type { Recipe, SeedRecipe, UserRecipeState } from "../../lib/types";
+import {
+  toRecipeSummary,
+  toSimmerRecipeView,
+  type NewRecipeInput,
+  type RecipeSummary,
+  type SimmerRecipeView,
+} from "../domain/types";
 import type { RecipeRepository, RecipeSearchOptions } from "./types";
-
-const SHARED_RECIPES_OWNER = "simmer-app";
 
 function slugify(text: string): string {
   return (
@@ -15,48 +20,60 @@ function slugify(text: string): string {
   );
 }
 
-function matchesText(recipe: SimmerRecipe, query: string): boolean {
-  const needle = query.toLowerCase();
-  return (
-    recipe.title.toLowerCase().includes(needle) ||
-    (recipe.description?.toLowerCase().includes(needle) ?? false) ||
-    recipe.tags.some((tag) => tag.toLowerCase().includes(needle)) ||
-    recipe.ingredients.some((ingredient) => ingredient.name.toLowerCase().includes(needle))
-  );
+function fromSeedRecipe(seed: SeedRecipe): Recipe {
+  return { ...seed, ownerId: null, createdAt: seed.updatedAt };
 }
 
+const emptyState: UserRecipeState = { favorite: false, lastCookedAt: null, stepNotes: {}, ingredientNotes: {} };
+
 /**
- * Dev-only in-memory RecipeRepository.
+ * Test-only in-memory RecipeRepository — a fake, not the "dev
+ * implementation" (that role now belongs to the real Postgres-backed
+ * DrizzleRecipeRepository, see ./drizzle-recipe-repository.ts and
+ * docs/mcp.md). Kept around purely so src/mcp/__tests__/ can exercise
+ * search/get/create/isolation logic without a database connection.
  *
- * Two tiers of data, mirroring how the real app will eventually work:
- *  - The bundled `seed-recipes.ts` content (converted via `fromAppRecipe`)
- *    is shared, read-only, and visible to every user — it's shipped app
- *    content, not anyone's private data.
- *  - Recipes created via `create()` (i.e. through save_recipe) are private
- *    to the userId that created them.
- *
- * This is a stand-in: it has no relationship to a given browser's
- * IndexedDB, so a recipe saved here does not appear in that user's Simmer
- * app until a real sync/shared-backend exists — see docs/mcp.md.
+ * Two tiers of data, mirroring the real repository: seed-recipes.ts
+ * content is shared (`ownerId: null`) and visible to every user; recipes
+ * created via `create()` are private to the userId that created them.
  */
 export class InMemoryRecipeRepository implements RecipeRepository {
-  private readonly sharedRecipes: SimmerRecipe[];
-  private readonly userRecipes = new Map<string, SimmerRecipe[]>();
+  private readonly sharedRecipes: Recipe[];
+  private readonly userRecipes = new Map<string, Recipe[]>();
+  private readonly states = new Map<string, UserRecipeState>();
 
-  constructor(seedRecipes = appSeedRecipes) {
-    this.sharedRecipes = seedRecipes.map((recipe) => fromAppRecipe(recipe, SHARED_RECIPES_OWNER, "da"));
+  constructor(seedRecipes: SeedRecipe[] = appSeedRecipes) {
+    this.sharedRecipes = seedRecipes.map(fromSeedRecipe);
   }
 
-  private allFor(userId: string): SimmerRecipe[] {
+  private allFor(userId: string): Recipe[] {
     return [...this.sharedRecipes, ...(this.userRecipes.get(userId) ?? [])];
   }
 
-  async search(userId: string, { query, tags, limit }: RecipeSearchOptions): Promise<SimmerRecipe[]> {
+  private stateFor(userId: string, recipeId: string): UserRecipeState {
+    return this.states.get(`${userId}:${recipeId}`) ?? emptyState;
+  }
+
+  async search(userId: string, { query, tags, limit }: RecipeSearchOptions): Promise<RecipeSummary[]> {
     let results = this.allFor(userId);
 
     if (query) {
-      results = results.filter((recipe) => matchesText(recipe, query));
+      const needle = query.toLowerCase();
+      results = results.filter((recipe) => {
+        const haystack = [
+          recipe.title.da,
+          recipe.title.en,
+          recipe.description.da,
+          recipe.description.en,
+          ...recipe.tags,
+          ...recipe.ingredients.flatMap((ingredient) => [ingredient.text.da, ingredient.text.en]),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(needle);
+      });
     }
+
     if (tags && tags.length > 0) {
       const wanted = tags.map((tag) => tag.toLowerCase());
       results = results.filter((recipe) => {
@@ -65,15 +82,16 @@ export class InMemoryRecipeRepository implements RecipeRepository {
       });
     }
 
-    return results.slice(0, limit ?? 10);
+    return results.slice(0, limit ?? 10).map((recipe) => toRecipeSummary(recipe, this.stateFor(userId, recipe.id)));
   }
 
-  async getById(userId: string, id: string): Promise<SimmerRecipe | undefined> {
-    return this.allFor(userId).find((recipe) => recipe.id === id);
+  async getById(userId: string, id: string): Promise<SimmerRecipeView | undefined> {
+    const recipe = this.allFor(userId).find((r) => r.id === id);
+    return recipe ? toSimmerRecipeView(recipe) : undefined;
   }
 
-  async create(userId: string, input: NewRecipeInput): Promise<SimmerRecipe> {
-    const now = new Date().toISOString();
+  async create(userId: string, input: NewRecipeInput): Promise<SimmerRecipeView> {
+    const bilingual = (value: string) => ({ da: value, en: value });
     const existingIds = new Set(this.allFor(userId).map((recipe) => recipe.id));
     const base = slugify(input.title);
     let id = base;
@@ -83,18 +101,25 @@ export class InMemoryRecipeRepository implements RecipeRepository {
       suffix += 1;
     }
 
-    const recipe: SimmerRecipe = {
+    const now = new Date().toISOString();
+    const recipe: Recipe = {
       id,
-      userId,
-      title: input.title,
-      description: input.description,
-      servings: input.servings,
-      ingredients: input.ingredients,
-      instructions: input.instructions,
+      ownerId: userId,
+      title: bilingual(input.title),
+      description: bilingual(input.description ?? ""),
+      emoji: "🍽️",
       tags: input.tags ?? [],
+      servings: input.servings ?? 4,
+      prepMinutes: 0,
+      cookMinutes: 0,
+      ingredients: input.ingredients.map((ingredient) => ({
+        text: bilingual(ingredient.name),
+        amount: ingredient.amount,
+        unit: ingredient.unit,
+      })),
+      steps: input.instructions.map((instruction, index) => ({ order: index + 1, instruction: bilingual(instruction) })),
       notes: input.notes,
       source: input.source,
-      lastCookedAt: null,
       createdAt: now,
       updatedAt: now,
     };
@@ -102,6 +127,6 @@ export class InMemoryRecipeRepository implements RecipeRepository {
     const existing = this.userRecipes.get(userId) ?? [];
     existing.push(recipe);
     this.userRecipes.set(userId, existing);
-    return recipe;
+    return toSimmerRecipeView(recipe);
   }
 }
