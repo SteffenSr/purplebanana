@@ -1,17 +1,13 @@
 "use client";
 
-import type { Recipe } from "@/lib/types";
-import { toggleFavorite } from "@/lib/db";
+import { useRouter } from "next/navigation";
+import { toggleFavoriteAction } from "@/app/actions/recipes";
 import { useLocale } from "@/lib/use-locale";
+import type { RecipeWithState } from "@/lib/recipes-db";
 
-export function RecipeCard({
-  recipe,
-  onFavoriteChange,
-}: {
-  recipe: Recipe;
-  onFavoriteChange: () => void;
-}) {
+export function RecipeCard({ recipe }: { recipe: RecipeWithState }) {
   const { locale, t } = useLocale();
+  const router = useRouter();
   const totalMinutes = recipe.prepMinutes + recipe.cookMinutes;
 
   return (
@@ -19,29 +15,22 @@ export function RecipeCard({
       <button
         type="button"
         className="recipe-card__fav"
-        aria-label={recipe.favorite ? t.recipeCard.removeFavorite : t.recipeCard.addFavorite}
-        aria-pressed={!!recipe.favorite}
+        aria-label={recipe.state.favorite ? t.recipeCard.removeFavorite : t.recipeCard.addFavorite}
+        aria-pressed={recipe.state.favorite}
         onClick={async (e) => {
           e.preventDefault();
-          await toggleFavorite(recipe.id);
-          onFavoriteChange();
+          await toggleFavoriteAction(recipe.id);
+          router.refresh();
         }}
       >
-        {recipe.favorite ? "⭐" : "☆"}
+        {recipe.state.favorite ? "⭐" : "☆"}
       </button>
-      {/*
-        Plain <a>, not next/link's <Link>: Link does a client-side "soft"
-        navigation that fetches an RSC data payload over the network with no
-        offline fallback, so it silently fails offline. A full document
-        navigation goes through the service worker's own cache-fallback
-        logic instead, which is what actually needs to work offline here.
-      */}
+      {/* Plain <a>: see docs/architecture.md's "Navigation" section. */}
       <a href={`/recipes/${recipe.id}/`} style={{ textDecoration: "none", color: "inherit" }}>
         {recipe.imageUrl ? (
-          // Plain <img>, not next/image: images.unoptimized is set for the
-          // static export (no optimization API to call anyway), and photos
-          // are already resized/re-encoded before being committed — see
-          // AGENTS.md's "Adding or editing recipes" section.
+          // Plain <img>, not next/image: photos are already resized/re-encoded
+          // before being committed — see AGENTS.md's "Adding or editing
+          // recipes" section.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             className="recipe-card__image"

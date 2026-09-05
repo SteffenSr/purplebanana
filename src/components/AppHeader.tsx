@@ -1,7 +1,6 @@
 "use client";
 
 import { useLocale } from "@/lib/use-locale";
-import { OnlineStatus } from "@/components/OnlineStatus";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ExperimentsButton } from "@/components/ExperimentsButton";
 
@@ -25,7 +24,9 @@ export function AppHeader() {
         </a>
         <div className="app-header__controls">
           <ExperimentsButton />
-          <OnlineStatus />
+          <a href="/settings/" className="btn btn-icon" aria-label={t.settings.heading}>
+            ⚙️
+          </a>
           <LanguageSwitcher />
         </div>
       </div>

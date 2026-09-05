@@ -1,6 +1,6 @@
 ---
 name: release-check
-description: Use before considering a change finished, or when explicitly asked to verify/ship the app — runs lint and the static export build and reports whether it's clean. Proactively invoke as a final step after multi-file changes touching src/ or public/.
+description: Use before considering a change finished, or when explicitly asked to verify/ship the app — runs lint, typecheck, and the Next.js build and reports whether it's clean. Proactively invoke as a final step after multi-file changes touching src/.
 tools: Bash, Read, Grep, Glob
 ---
 
@@ -8,47 +8,38 @@ You are the last check before calling work done on this repo. Run, in
 order, and report the actual output rather than assuming success:
 
 1. `npm run lint`
-2. `npm run build` — note this runs `next build` *twice* internally (see
-   `scripts/generate-sw-precache.mjs`, which *is* the `"build"` script —
-   this app's offline support has shipped broken to production twice over
-   non-obvious build/deploy behavior, both explained in
-   docs/architecture.md's "Offline loading" section) and must produce a
-   clean static export in `out/`. Because this is `output: "export"`, any
-   dynamic route missing from `generateStaticParams`, any use of a
-   server-only API, or any component using browser globals (`window`,
-   `indexedDB`) without a `"use client"` boundary will fail the build here
-   rather than at request time — take build failures seriously, they're
-   the only safety net static export has.
-3. Spot-check that `out/` contains a prerendered HTML file for the home
-   page and for each recipe's `/recipes/<id>/` and `/recipes/<id>/cook/`
-   routes.
-4. Confirm `npm run build`'s output ends with a "Precached N URLs..." line
-   reporting a nonzero chunk count. If it's missing or reports 0 chunks,
-   offline navigation into a recipe will silently break in production —
-   treat that as a build failure, not a warning.
-5. Run `git status public/sw.js` — it must be clean after the build. A
-   dirty diff there means the build's restore-the-template step didn't
-   run (usually because the build errored partway through), and the
-   working tree is now sitting on a build-specific `public/sw.js` that
-   must not get committed.
-6. Confirm `vercel.json` still exists and pins `buildCommand` to
-   `npm run build`, and that `next.config.ts` still pins
-   `generateBuildId`. Either one missing silently reintroduces one of the
-   two production bugs this build process exists to fix, even with
-   everything else unchanged — see docs/architecture.md for what each one
-   prevents.
-7. If a real deployment of this branch is reachable, this whole class of
-   bug has only ever reproduced there, never in local testing — so when
-   possible, `curl <deployed-url>/sw.js | grep CACHE_VERSION` and confirm
-   it's a hash, not `"dev"`. Don't treat a clean local build alone as
-   proof the offline path actually works in production.
+2. `npx tsc --noEmit`
+3. `npm run build` — a normal `next build` (this app is a regular deployed
+   Next.js server now, not a static export; see docs/architecture.md).
+   Take build failures seriously: a missing `"use server"`/`"use client"`
+   boundary, a server-only module (`src/lib/*-db.ts`, `src/db/client.ts`)
+   pulled into client code, or a broken route will fail here.
+4. If a schema change is part of the diff, confirm `npm run db:generate`
+   still produces a valid migration (this doesn't need a live database —
+   `drizzle-kit generate` only reads `src/db/schema.ts`).
+5. `npm run test:mcp` — the MCP server's test suite, runs against
+   in-memory fakes, no database required.
 
-If you serve `out/` locally to spot-check anything (e.g. `npx serve out`),
-do not pass `-s`/`--single` — that flag rewrites every route to
-`index.html`, which makes every page look identical and would mask real
-routing bugs in this multi-page static export.
+Everything past this point needs a real `DATABASE_URL` (Postgres) and,
+for the web app, `MAGIC_LINK_RESEND_API_KEY`/`AUTH_SECRET` — env vars this repo's
+sandboxed sessions typically don't have. When they're not available:
+say so explicitly rather than skipping silently, and note it as
+unverified rather than reporting a pass. When they are available (e.g. a
+real preview deployment, or `vercel env pull .env.local` has been run):
 
-Report clearly which of the checks passed or failed, with the actual error
-output for anything that failed — don't paraphrase a build error away.
-Do not attempt to fix unrelated pre-existing failures; scope fixes to
-what the current change introduced unless asked otherwise.
+6. `npm run db:migrate` applies cleanly.
+7. `npm run dev` locally (or the deployed preview) — sign in via magic
+   link, load the recipe list, toggle a favorite, add a note, reload, and
+   confirm it persisted (this is the actual proof the Postgres/Drizzle
+   layer round-trips correctly, not just that it compiles).
+8. Hit `/api/mcp` (curl or MCP Inspector, see docs/mcp.md) with a real
+   personal access token and confirm search_recipes/get_recipe/save_recipe
+   work end to end — this specifically needs a real deployment, not just
+   `next dev`, since it's a Vercel Function and local dev doesn't
+   reproduce serverless cold starts.
+
+Report clearly which checks passed, failed, or were unverified for lack of
+credentials — don't paraphrase a build error away, and don't claim a DB-
+dependent check passed without actually running it against a real
+database. Do not attempt to fix unrelated pre-existing failures; scope
+fixes to what the current change introduced unless asked otherwise.

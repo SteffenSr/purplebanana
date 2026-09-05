@@ -3,19 +3,30 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Kitchen Recipes - a mobile-first, offline-capable vegan recipe reader",
+  "description": "Simmer - a mobile-first vegan recipe app and food system of record, with an MCP server for AI assistants",
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/generate-sw-precache.mjs",
-    "start": "npx serve out",
-    "lint": "eslint ."
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx src/db/seed.ts",
+    "mcp:stdio": "NODE_OPTIONS=--conditions=react-server tsx src/mcp/stdio.ts",
+    "test:mcp": "tsx --test src/mcp/__tests__/*.test.ts"
   },
   "dependencies": {
+    "@auth/drizzle-adapter": "^1.11.3",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@neondatabase/serverless": "^0.10.4",
     "@openai/agents": "^0.17.0",
-    "dexie": "^4.0.10",
+    "drizzle-orm": "^0.45.2",
     "next": "^16.3.1",
+    "next-auth": "5.0.0-beta.32",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "resend": "^6.26.0",
+    "server-only": "^0.0.1",
     "zod": "^4.0.0"
   },
   "devDependencies": {
@@ -23,8 +34,10 @@
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.4",
     "@types/react-dom": "^19.0.2",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.18.0",
     "eslint-config-next": "^16.3.1",
+    "tsx": "^4.23.13",
     "typescript": "^5.7.3"
   }
 }

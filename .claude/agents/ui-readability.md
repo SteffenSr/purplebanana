@@ -25,9 +25,11 @@ Before approving or making a UI change, check it against
 - Cook mode (`src/components/CookMode.tsx`) stays single-purpose: one step,
   one instruction, two navigation buttons. Push anything else (notes,
   metadata, secondary actions) to the recipe detail screen instead.
-- New routes under `src/app/recipes/[id]/...` need `generateStaticParams`
-  sourced from `seed-recipes.ts` (static export has no on-demand SSR).
+- Recipe/cook pages are Server Components that fetch via
+  `src/lib/recipes-db.ts` and pass data down as props to client
+  components (`RecipeDetail.tsx`, `CookMode.tsx`) — keep that split rather
+  than reaching for a client-side data hook.
 
 If you change `globals.css`, prefer extending the existing token set over
 introducing a parallel one. After a nontrivial layout change, run
-`npm run build` to confirm the static export still succeeds.
+`npm run build` to confirm the build still succeeds.

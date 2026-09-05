@@ -3,8 +3,16 @@ import type { ExperimentId } from "./experiments";
 
 export interface Dictionary {
   appName: string;
-  online: string;
-  offline: string;
+  auth: {
+    signInHeading: string;
+    signInSubheading: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    sendLink: string;
+    checkEmailHeading: string;
+    checkEmailSubheading: string;
+    signOut: string;
+  };
   home: {
     heading: string;
     subheading: string;
@@ -101,17 +109,70 @@ export interface Dictionary {
       error: string;
     };
   };
+  settings: {
+    heading: string;
+    account: {
+      heading: string;
+      signedInAs: (email: string) => string;
+      signOut: string;
+    };
+    tokens: {
+      heading: string;
+      subheading: string;
+      setupHeading: string;
+      setupUrlLabel: string;
+      setupStep1: string;
+      setupStep2: string;
+      setupStep3: string;
+      setupStep4: string;
+      setupAllowAllNote: string;
+      labelPlaceholder: string;
+      generate: string;
+      revoke: string;
+      newTokenNotice: string;
+      empty: string;
+      createdAt: (date: string) => string;
+      neverUsed: string;
+      lastUsed: (date: string) => string;
+    };
+    foodProfile: {
+      heading: string;
+      subheading: string;
+      dietaryPreferences: string;
+      dislikes: string;
+      favoriteIngredients: string;
+      goals: string;
+      listPlaceholder: string;
+      save: string;
+    };
+    household: {
+      heading: string;
+      subheading: string;
+      namePlaceholder: string;
+      likesPlaceholder: string;
+      dislikesPlaceholder: string;
+      add: string;
+      remove: string;
+    };
+  };
 }
 
 export const dictionaries: Record<Locale, Dictionary> = {
   da: {
-    appName: "Køkkenopskrifter",
-    online: "Online",
-    offline: "Offline-tilstand",
+    appName: "Simmer",
+    auth: {
+      signInHeading: "Log ind på Simmer",
+      signInSubheading: "Indtast din e-mail, så sender vi dig et login-link.",
+      emailLabel: "E-mail",
+      emailPlaceholder: "dig@eksempel.dk",
+      sendLink: "Send login-link",
+      checkEmailHeading: "Tjek din indbakke",
+      checkEmailSubheading: "Vi har sendt et login-link til din e-mail. Linket udløber snart.",
+      signOut: "Log ud",
+    },
     home: {
       heading: "Hvad skal vi lave mad?",
-      subheading:
-        "Alle opskrifter herunder er gemt på denne enhed, så appen bliver ved med at virke selv uden forbindelse.",
+      subheading: "Dine opskrifter, gemt i Simmer og tilgængelige fra enhver enhed.",
       loading: "Henter dine opskrifter…",
       error: (message) => `Kunne ikke hente opskrifter: ${message}`,
       empty: "Ingen opskrifter endnu.",
@@ -196,10 +257,6 @@ export const dictionaries: Record<Locale, Dictionary> = {
           title: "Onboarding",
           description: "Førstegangsoplevelsen for nye brugere.",
         },
-        login: {
-          title: "Log ind",
-          description: "Login- og oprettelsesflow.",
-        },
         profile: {
           title: "Profil",
           description: "Profil- og kontoindstillinger.",
@@ -227,15 +284,71 @@ export const dictionaries: Record<Locale, Dictionary> = {
         error: "Nomi kunne ikke svare lige nu. Prøv igen.",
       },
     },
+    settings: {
+      heading: "Indstillinger",
+      account: {
+        heading: "Konto",
+        signedInAs: (email) => `Logget ind som ${email}`,
+        signOut: "Log ud",
+      },
+      tokens: {
+        heading: "Adgangstokens til MCP",
+        subheading:
+          "Et personligt token giver Claude, ChatGPT eller en anden MCP-klient adgang til dine Simmer-data. Indsæt det i klientens forbindelsesopsætning.",
+        setupHeading: "Sådan forbinder du Claude",
+        setupUrlLabel: "Brug denne URL som MCP-serverens adresse:",
+        setupStep1: "I Claude: gå til Indstillinger → Connectors → \"Add custom connector\".",
+        setupStep2: "Indsæt URL'en ovenfor, og vælg \"None\" under \"Authentication\".",
+        setupStep3:
+          "Under \"Request headers\" skal du tilføje én med navnet \"authorization\". Værdien sendes præcis som skrevet, så husk \"Bearer \" foran tokenet, f.eks. \"Bearer simmer_pat_...\".",
+        setupStep4: "Brug det token, du genererer nedenfor, som resten af værdien.",
+        setupAllowAllNote:
+          "Vil du have den nemmeste oplevelse, kan du give tilladelse til alle Simmers værktøjer, når Claude spørger.",
+        labelPlaceholder: "f.eks. \"Claude på min bærbare\"",
+        generate: "Generér token",
+        revoke: "Tilbagekald",
+        newTokenNotice: "Kopiér tokenet nu — det vises kun denne ene gang.",
+        empty: "Ingen tokens endnu.",
+        createdAt: (date) => `Oprettet ${date}`,
+        neverUsed: "Aldrig brugt",
+        lastUsed: (date) => `Sidst brugt ${date}`,
+      },
+      foodProfile: {
+        heading: "Madprofil",
+        subheading: "Fortæl Simmer om dine madpræferencer, så en AI-assistent kan tage hensyn til dem.",
+        dietaryPreferences: "Kostpræferencer",
+        dislikes: "Kan ikke lide",
+        favoriteIngredients: "Yndlingsingredienser",
+        goals: "Mål",
+        listPlaceholder: "Adskil med komma",
+        save: "Gem",
+      },
+      household: {
+        heading: "Husstand",
+        subheading: "Tilføj medlemmer af din husstand og deres madpræferencer.",
+        namePlaceholder: "Navn",
+        likesPlaceholder: "Kan lide (adskil med komma)",
+        dislikesPlaceholder: "Kan ikke lide (adskil med komma)",
+        add: "Tilføj",
+        remove: "Fjern",
+      },
+    },
   },
   en: {
-    appName: "Kitchen Recipes",
-    online: "Online",
-    offline: "Offline mode",
+    appName: "Simmer",
+    auth: {
+      signInHeading: "Sign in to Simmer",
+      signInSubheading: "Enter your email and we'll send you a sign-in link.",
+      emailLabel: "Email",
+      emailPlaceholder: "you@example.com",
+      sendLink: "Send sign-in link",
+      checkEmailHeading: "Check your inbox",
+      checkEmailSubheading: "We've sent a sign-in link to your email. It expires soon.",
+      signOut: "Sign out",
+    },
     home: {
       heading: "What are we cooking?",
-      subheading:
-        "Every recipe below is saved on this device, so the app keeps working even without a signal.",
+      subheading: "Your recipes, saved in Simmer and available from any device.",
       loading: "Loading your recipe box…",
       error: (message) => `Couldn't load recipes: ${message}`,
       empty: "No recipes yet.",
@@ -320,10 +433,6 @@ export const dictionaries: Record<Locale, Dictionary> = {
           title: "Onboarding",
           description: "The first-run experience for new users.",
         },
-        login: {
-          title: "Login",
-          description: "Sign-in and account creation flow.",
-        },
         profile: {
           title: "Profile",
           description: "Profile and account settings.",
@@ -349,6 +458,55 @@ export const dictionaries: Record<Locale, Dictionary> = {
         send: "Send",
         thinking: "Nomi is thinking…",
         error: "Nomi couldn't respond right now. Please try again.",
+      },
+    },
+    settings: {
+      heading: "Settings",
+      account: {
+        heading: "Account",
+        signedInAs: (email) => `Signed in as ${email}`,
+        signOut: "Sign out",
+      },
+      tokens: {
+        heading: "MCP access tokens",
+        subheading:
+          "A personal access token lets Claude, ChatGPT, or another MCP client reach your Simmer data. Paste it into the client's connector setup.",
+        setupHeading: "How to connect Claude",
+        setupUrlLabel: "Use this URL as the MCP server address:",
+        setupStep1: 'In Claude: go to Settings → Connectors → "Add custom connector".',
+        setupStep2: 'Paste the URL above, and choose "None" under "Authentication".',
+        setupStep3:
+          'Under "Request headers" add one named "authorization". The value is sent exactly as typed, so keep the "Bearer " prefix, e.g. "Bearer simmer_pat_...".',
+        setupStep4: "Use the token you generate below as the rest of the value.",
+        setupAllowAllNote:
+          "For the smoothest experience, allow all of Simmer's tools when Claude asks for permission.",
+        labelPlaceholder: 'e.g. "Claude on my laptop"',
+        generate: "Generate token",
+        revoke: "Revoke",
+        newTokenNotice: "Copy this token now — it's shown only this once.",
+        empty: "No tokens yet.",
+        createdAt: (date) => `Created ${date}`,
+        neverUsed: "Never used",
+        lastUsed: (date) => `Last used ${date}`,
+      },
+      foodProfile: {
+        heading: "Food profile",
+        subheading: "Tell Simmer about your food preferences so an AI assistant can take them into account.",
+        dietaryPreferences: "Dietary preferences",
+        dislikes: "Dislikes",
+        favoriteIngredients: "Favorite ingredients",
+        goals: "Goals",
+        listPlaceholder: "Comma-separated",
+        save: "Save",
+      },
+      household: {
+        heading: "Household",
+        subheading: "Add members of your household and their food preferences.",
+        namePlaceholder: "Name",
+        likesPlaceholder: "Likes (comma-separated)",
+        dislikesPlaceholder: "Dislikes (comma-separated)",
+        add: "Add",
+        remove: "Remove",
       },
     },
   },

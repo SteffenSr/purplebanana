@@ -1,153 +1,92 @@
 # Architecture
 
-## Why static export + IndexedDB
+## Why Postgres + Auth.js
 
-The app has no server component: `next.config.ts` sets `output: "export"`,
-so `next build` produces plain HTML/CSS/JS in `out/` that can be hosted on
-any static file host (GitHub Pages, Netlify, S3, etc.) with no Node runtime.
+This app used to be a fully static export (`output: "export"`) with the
+browser's own IndexedDB as its only database — see git history before this
+section if you need that story. It changed for one concrete reason: the
+MCP server (`src/mcp/`, see docs/mcp.md) needs to run as a real Vercel
+Function in the *same* deployment as the recipe app, and a static export
+can't have dynamic Route Handlers at all. Once that constraint was gone,
+the deeper one it was hiding became the real design driver: Vercel
+Functions are stateless between invocations, so *some* real database was
+always going to be necessary to give the MCP server (and, this app decided,
+the recipe app itself) actual persistence — see docs/mcp.md's own
+"Context" section for the full reasoning.
 
-That constrains the app in one important way: **there is no server to hold
-state or run dynamic routes on demand.** So:
+The result: **Postgres (Vercel Postgres, which is Neon under Vercel's
+Marketplace integration) is now the single source of truth**, shared by
+the app's own pages and every MCP tool, and **Auth.js handles sign-in**
+(email magic link via Resend) since a shared backend needs real accounts,
+not anonymous per-device storage.
 
-- Every dynamic route (`/recipes/[id]`, `/recipes/[id]/cook`) is fully
-  prerendered at build time via `generateStaticParams`, sourced from
-  `src/lib/seed-recipes.ts`. Adding a recipe to that file and rebuilding is
-  what gives it its own page.
-- The actual data the UI reads and writes at runtime lives in the
-  **browser's IndexedDB** (via Dexie, `src/lib/db.ts`), not in the static
-  HTML. `ensureSeeded()` syncs `seed-recipes.ts` into IndexedDB on every
-  launch — not just the first one — and every read goes through IndexedDB.
-  This is what makes per-device state (favorites, last-cooked date)
-  possible without a backend, and it's the actual mechanism behind "works
-  offline": once synced, the app doesn't need to fetch recipe content
-  again until the next time it's opened online.
+- `src/db/schema.ts` is the Drizzle schema — Auth.js's own tables
+  (`user`/`account`/`session`/`verificationToken`), `recipe`,
+  `user_recipe_state`, `food_profile`, `household_member`, `meal_history`,
+  `meal_history_recipe`, and `personal_access_token` (MCP auth — see
+  docs/mcp.md).
+- `src/lib/recipes-db.ts`, `food-profile-db.ts`, `meal-history-db.ts`, and
+  `personal-access-tokens-db.ts` are the actual query layer — every one
+  starts with `import "server-only"` and takes `userId` explicitly on
+  every function, so a request can never read another user's data. Both
+  the app's Server Components/Actions and the MCP server's repositories
+  (`src/mcp/repositories/drizzle-*.ts`) call into these same modules; see
+  the `data-layer` subagent before changing any of them. Anything that
+  loads one of these modules outside Next's own bundler (`npm run
+  mcp:stdio`, notably) needs `NODE_OPTIONS=--conditions=react-server` set
+  for `server-only` to resolve — Next aliases it automatically, plain
+  Node/tsx doesn't. `mcp:stdio`'s script already sets this.
+- Routes are ordinary dynamic Next.js routes again — no
+  `generateStaticParams`, no build-time route enumeration. `/recipes/[id]`
+  fetches its recipe from Postgres per request.
+
+### Local setup
+
+```
+vercel link                 # once, to connect this checkout to the Vercel project
+vercel env pull .env.local  # pulls DATABASE_URL, MAGIC_LINK_RESEND_API_KEY, AUTH_SECRET, etc.
+npm run db:migrate          # applies drizzle/ migrations
+npm run db:seed             # loads seed-recipes.ts as shared starter recipes
+npm run dev
+```
+
+See `.env.example` for every environment variable this app reads, and
+docs/mcp.md's "Environment variables" section for the MCP-specific ones.
 
 ## Layers
 
 ```
-seed-recipes.ts  (build-time constant, ships in the JS bundle)
-       │  ensureSeeded() — adds new recipes, updates changed ones
-       │  (by comparing updatedAt, preserving favorite/lastCookedAt),
-       │  removes recipes no longer present in this file
+seed-recipes.ts  (build-time constant, shipped in the JS bundle)
+       │  npm run db:seed — one-time load as ownerId: null rows
        ▼
-   IndexedDB      (src/lib/db.ts — Dexie, the real runtime database)
-       │  getAllRecipes / getRecipe / toggleFavorite / markCooked
+   Postgres       (src/db/schema.ts — Drizzle, the real runtime database)
+       │  src/lib/recipes-db.ts — getVisibleRecipes / toggleFavorite / ...
        ▼
-  hooks.ts        (useRecipes / useRecipe — client components call these)
-       │
+  Server Components (src/app/page.tsx, recipes/[id]/page.tsx, .../cook/page.tsx)
+       │  fetch data server-side, pass down as props
        ▼
-  components      (RecipeCard, RecipeDetail, CookMode)
+  client components (RecipeList, RecipeCard, RecipeDetail, CookMode)
+       │  mutations go through Server Actions (src/app/actions/recipes.ts),
+       │  which call recipes-db.ts and revalidatePath()
+       ▼
+       Postgres again
 ```
 
-An early version of `ensureSeeded()` really did only seed once, on an
-empty store — which meant a returning user's device stayed stuck on
-whatever recipes existed the very first time they opened the app,
-permanently. No amount of reloading, cache-clearing, or redeploying could
-ever change that, since IndexedDB isn't touched by any of those. The fix
-was to make every launch reconcile IndexedDB against the current
-`seed-recipes.ts`, not just seed an empty store once — see the
-`ensureSeeded()` doc comment in `src/lib/db.ts` for the exact merge rules,
-and note the `recipe-content` subagent's requirement to bump `updatedAt`
-on any content edit, or that edit will never reach anyone who's already
-opened the app.
-
-Components never touch `db.recipes` directly — always through
-`src/lib/hooks.ts` or the exported functions in `src/lib/db.ts`. That keeps
-the "only run in the browser" guard and error handling in one place instead
-of scattered through the UI.
-
-## Offline loading
-
-`public/sw.js` is a hand-rolled service worker (no Workbox/next-pwa
-dependency) registered from `src/components/ServiceWorkerRegister.tsx`. It
-uses a network-first, cache-fallback strategy for same-origin GET requests:
-every asset actually fetched while online gets cached, and a dropped
-connection falls back to the cached copy (or `/` for an uncached
-navigation).
-
-That alone isn't enough to guarantee a recipe opens offline on a first-ever
-visit, for two reasons that both trace back to the same root cause — a
-service worker never controls the page load that first registers it, so it
-can't opportunistically cache that load's own requests:
-
-- **Recipe pages you never visited while online** wouldn't be cached at
-  all if caching only happened opportunistically.
-- **The hydration JS/CSS chunks** a route needs are content-hashed
-  filenames unknown until after the build runs, so they can't be
-  hand-written into the service worker source.
-
-`scripts/generate-sw-precache.mjs` closes both gaps — and it *is*
-`package.json`'s `"build"` script (`"build": "node
-scripts/generate-sw-precache.mjs"`), not a step chained after `next
-build`. That's the result of two rounds of this shipping broken in
-production despite working perfectly locally; both are worth knowing
-before touching this script.
-
-**Round 1 — it ran as an npm `postbuild` hook.** Vercel's inferred build
-command for a detected Next.js project is `next build` directly, not
-`npm run build`, and npm's `pre`/`postbuild` hooks only fire for the
-latter — so Vercel silently skipped it. Fixed by adding `vercel.json`'s
-`"buildCommand": "npm run build"`, pinning the deploy host to a command
-that actually runs our script regardless of its own framework-detection
-defaults.
-
-**Round 2 — even with the right command running, it rewrote the wrong
-file.** The script used to run once, after `next build`, and patch the
-precache list directly into the *built* `out/sw.js`. That works for a
-plain static file server (serving `out/` with e.g. `npx serve`), which is
-how it was tested — but not on Vercel. Per Next.js's own docs, "the
-public directory isn't a real directory, it's a collection of routes
-created at build time": Vercel snapshots `public/` into its serving
-manifest *during* `next build` itself, so a post-hoc edit to `out/sw.js`
-never reaches what Vercel actually serves, even though the build
-"succeeds" and the source-level content looks right.
-
-The fix requires the correct content to exist in `public/sw.js` *before*
-a build snapshots it — but the precache list needs every hashed JS/CSS
-chunk filename, and those don't exist until *after* a build compiles
-them. So the script runs `next build` twice:
-
-1. Build once (thrown away) to learn the real chunk filenames.
-2. Compute the precache list from that output and write it into
-   `public/sw.js` — the committed source file.
-3. Build again, so *this* build's snapshot of `public/sw.js` (and thus
-   `out/sw.js`) carries the real list.
-4. Restore `public/sw.js` to its original committed template content, so
-   a local `npm run build` doesn't leave the working tree dirty —
-   `out/sw.js` (gitignored) keeps the generated version from step 3.
-
-`next.config.ts` pins `generateBuildId` to a fixed string for this to
-work: Next.js also writes a few manifest files under a
-`_next/static/<buildId>/` directory where the ID is randomized fresh on
-every `next build` invocation by default, which would otherwise make the
-two passes disagree on that directory's name even though the
-content-hashed chunk *filenames* are already stable across them (public/
-assets aren't bundled into JS/CSS, so changing `public/sw.js` between
-passes doesn't affect those hashes).
-
-`CACHE_VERSION` is a hash of the final precached file list, so a build
-that changes any asset gets a fresh cache namespace and evicts the old one
-(see the `activate` handler) for returning users. If a recipe is ever
-added or removed, the whole two-pass build regenerates the list
-automatically — nothing to remember to update by hand.
+`src/mcp/` reads and writes the exact same `recipes-db.ts` (and the other
+`*-db.ts` modules) — see docs/mcp.md's architecture diagram.
 
 ## Localization (Danish / English)
 
-The app is bilingual, Danish first. Two constraints already established
-above shape how: there's no server, and (per "Navigation uses plain `<a>`"
-below) every in-app link is a full page reload, not a client-side route
-change.
+The app is bilingual, Danish first. One constraint already established
+above shapes how: (per "Navigation uses plain `<a>`" below) every in-app
+link is a full page reload, not a client-side route change.
 
 **Why this isn't locale-prefixed routing (`/da/...`, `/en/...`).** That's
-the "proper" Next.js i18n answer, but it doesn't fit here: this app's
-routes are already fully enumerated at build time via
-`generateStaticParams` (see "Why static export + IndexedDB" above), so
-locale-prefixed routes would double every recipe/cook route, and switching
-language would need to rewrite the current URL to the other locale prefix
-on every navigation — real work for a static export with no server to do
-it centrally. It also doesn't match the UX this was built for: "I want to
-flip to a Danish recipe on a whim, without losing my place" reads far more
-naturally as an instant in-place toggle than as a navigation.
+the "proper" Next.js i18n answer, but it doesn't fit the UX this was built
+for: "I want to flip to a Danish recipe on a whim, without losing my
+place" reads far more naturally as an instant in-place toggle than as a
+navigation that doubles every recipe/cook route and rewrites the current
+URL to the other locale prefix on every switch.
 
 **The mechanism** (`src/lib/locale.ts`, `use-locale.ts`,
 `translations.ts`) mirrors `src/lib/timers.ts` almost exactly, for the
@@ -169,34 +108,31 @@ anything living only in memory wouldn't survive it.
 - **Avoiding a hydration flash**: the store exposes
   `getServerLocaleSnapshot()` (always `"da"`, matching the prerendered
   HTML and `<html lang="da">`) alongside the real client `getSnapshot()`,
-  and `useLocale()` reads both through `useSyncExternalStore` — the same
-  pattern `OnlineStatus.tsx` already uses for `navigator.onLine`. React's
+  and `useLocale()` reads both through `useSyncExternalStore`. React's
   hydration handling for that hook resolves server → real client value in
   the same commit, before paint, rather than a visible post-mount flash
   from a `useEffect`.
-- **Recipe content** (`src/lib/seed-recipes.ts`) stores every user-facing
-  field as `LocalizedText` (`{ da, en }`, see `types.ts`) rather than
-  duplicating whole recipe objects per language — one `Recipe` has both
-  languages in it, and components pick `field[locale]` at render time.
-  This is also why `db.ts`'s Dexie schema dropped `title` from its index
-  in schema version 2: an object can't be a simple sort/index key, so the
+- **Recipe content** (`src/lib/seed-recipes.ts`, and any recipe saved
+  later) stores every user-facing field as `LocalizedText` (`{ da, en }`,
+  see `types.ts`) rather than duplicating whole recipe objects per
+  language — one `Recipe` has both languages in it, stored as `jsonb` in
+  Postgres, and components pick `field[locale]` at render time. The
   recipe list is sorted by `title[locale]` in the UI layer
-  (`src/app/page.tsx`) instead, where the current language is known.
+  (`src/components/RecipeList.tsx`), not in the database query, since the
+  current language is only known client-side.
 
 ## Navigation uses plain `<a>`, not `next/link`
 
-Every internal link in this app is a plain `<a href>`, not `next/link`'s
-`<Link>`. That's deliberate: `<Link>` does a client-side "soft" navigation
-that fetches a small RSC data payload for the target route over the
-network on every click, with no offline fallback — if that fetch fails,
-the navigation just silently aborts. It only worked offline when that
-exact payload happened to already be cached, which wasn't reliable
-(viewport-based prefetch timing, cache-key/token mismatches). A plain
-`<a>` triggers a full document navigation instead, which goes through the
-service worker's own cache-fallback logic above — the thing already
-verified to work offline. For an app whose whole premise is "must not fail
-mid-recipe with no signal," a full page load beats a snappier transition
-that can silently do nothing.
+Every internal link in this app is still a plain `<a href>`, not
+`next/link`'s `<Link>` — a holdover from when this app was a static
+export with an offline-cache-fallback service worker that `<Link>`'s
+client-side "soft" navigation couldn't use (see git history for that
+story). That reason no longer applies now that the app is server-backed
+and offline support is gone; a plain `<a>` today just means every internal
+navigation is a full page reload instead of a fast client-side transition.
+Switching to `<Link>` is reasonable follow-up work, not done as part of
+the Postgres/MCP rearchitecture — don't reintroduce it piecemeal without
+converting the app's internal links consistently.
 
 ## Cook mode
 
@@ -208,8 +144,8 @@ back/next flow so it works with wet or floury hands. It also:
   doesn't dim mid-instruction — best-effort, no-ops on unsupported browsers;
 - offers an optional per-step **countdown timer** for steps with real dead
   time (`Step.timerMinutes`);
-- calls `markCooked()` on finishing, which is the one place the app writes
-  a timestamp back to IndexedDB from the cooking flow itself.
+- calls the `markCookedAction` Server Action on finishing, which writes a
+  timestamp to `user_recipe_state` in Postgres.
 
 ## Persistent step timers
 
@@ -221,9 +157,10 @@ page) is on screen at that instant. A `useState` countdown tied to the
 current step can't do that; it resets the moment the step changes.
 
 `src/lib/timers.ts` is a module-level store, not React state, keyed by
-`recipeId:stepOrder`. Two decisions fall directly out of the "no server,
-IndexedDB-only, full-page-reload navigation" constraints already documented
-above:
+`recipeId:stepOrder`. Two decisions fall directly out of "every internal
+navigation is a full page reload" (see above) — this part is unrelated to
+where recipe data lives, and stayed exactly the same through the move to
+Postgres:
 
 - **Timers track a wall-clock `endAt`, not a decrementing counter.** A
   `setInterval` that ticks a counter down loses time the instant its tab is
@@ -234,13 +171,13 @@ above:
   instead means "how much time is left" is always `endAt - Date.now()`,
   correct regardless of how long the tick loop was paused or how many
   reloads happened in between.
-- **State is persisted to `localStorage`, not IndexedDB.** Timers are
-  ephemeral session state (they don't need Dexie's schema/versioning, and
-  writing to it synchronously on every tick would be needless overhead),
-  but they do need to survive the hard reload that happens when a cook
-  exits and re-enters cook mode, or when the browser reclaims a backgrounded
-  tab. `localStorage` is synchronous and available before hydration, so a
-  freshly loaded page can recompute every timer's remaining time on its
+- **State is persisted to `localStorage`, not the database.** Timers are
+  ephemeral, per-device session state, not something that needs to follow
+  the user to another device — but they do need to survive the hard
+  reload that happens when a cook exits and re-enters cook mode, or when
+  the browser reclaims a backgrounded tab. `localStorage` is synchronous
+  and available before hydration, so a freshly loaded page can recompute
+  every timer's remaining time on its
   very first render.
 
 The engine self-starts on import (any page that pulls in `timers.ts`
@@ -257,36 +194,42 @@ page, even the recipe list — not just the step that started the timer.
 returning to a backgrounded tab fires a just-missed alarm right away
 instead of waiting for the next tick.
 
-This has one honest limit, inherent to a server-less static export: it only
-works while the tab/app's JS is actually running. If the browser fully
-closes or kills the tab, nothing can wake it to fire an alarm — there's no
-push server to do that from. `endAt` being wall-clock-based means the timer
-is never *wrong* when the page comes back (no server), just possibly
-*late* if the tab was gone for a while.
+This has one honest limit, inherent to a client-only timer with no push
+notification service behind it: it only works while the tab/app's JS is
+actually running. If the browser fully closes or kills the tab, nothing
+can wake it to fire an alarm — a real backend doesn't change that on its
+own; it would take an actual push-notification subscription, which
+nothing here implements. `endAt` being wall-clock-based means the timer is
+never *wrong* when the page comes back, just possibly *late* if the tab
+was gone for a while.
 
 ## Recipe chatbot (Nomi) backend
 
 `src/app/experiments/chatbot` is a full-screen chat UI
 (`src/components/ChatBot.tsx`) for "Nomi", a recipe/nutrition assistant.
-Unlike everything else in this app, answering a chat message genuinely
-needs a server: an LLM call can't happen from a static export with no
-backend (see "Why static export + IndexedDB" above), and it shouldn't run
-client-side even if it technically could, since that would mean shipping
-an API key to the browser.
+Answering a chat message needs a server (an LLM call shouldn't run
+client-side even where it technically could, since that would mean
+shipping an API key to the browser), and predates this app having any
+Next.js server code of its own.
 
 That's why the endpoint (`api/chat.ts`) lives in a top-level `/api`
-directory instead of a Next.js route handler under `src/app/api`. With
-`output: "export"`, Next.js route handlers must themselves be statically
-exportable — they can't run arbitrary server code per request — so they
-can't do this job. `/api/*.ts` at the repo root is a separate Vercel
+directory instead of a Next.js route handler under `src/app/api` — at the
+time it was written, `next.config.ts` still set `output: "export"`, so a
+route handler wasn't an option at all (static export forbids dynamic
+Route Handlers). `/api/*.ts` at the repo root is a separate Vercel
 convention ("Vercel Functions"): Vercel deploys any file there as its own
 Node serverless function regardless of the framework preset, alongside
-whatever static site the framework build produces. The static export in
-`out/` and the function in `api/chat.ts` deploy together under the same
-Vercel project and the same domain, so the client can `fetch("/api/chat")`
-same-origin with no CORS configuration — but the function itself isn't
-part of the `next build` / static export at all, and doesn't run locally
-under `next dev` (only on Vercel, or under `vercel dev`).
+whatever the framework build produces — which is how this one endpoint
+ran on real server infrastructure while the rest of the app was still a
+static export. Now that the app itself is a normal deployed Next.js
+server (see "Why Postgres + Auth.js" above), a *new* endpoint like this
+would more naturally be a route handler under `src/app/api/` — that's
+exactly what `src/app/api/mcp/route.ts` is, see docs/mcp.md. `api/chat.ts`
+staying where it is isn't a problem (both conventions deploy fine
+side by side on Vercel), just a historical artifact worth knowing about
+before assuming every server endpoint in this repo follows one pattern.
+It still doesn't run locally under `next dev` (only on Vercel, or under
+`vercel dev`).
 
 `api/chat.ts` uses the [OpenAI Agents SDK](https://www.npmjs.com/package/@openai/agents)
 to run a single `Agent` named Nomi on `gpt-5-nano`. It only does that when an
@@ -349,17 +292,23 @@ turned out to be wrong:
   "module"` to the root `package.json` — exactly what Node's own warning
   in Round 2 suggested from the start. It's a project-wide setting, but a
   low-risk one here: nothing else at the repo root is a plain `.js`/`.cjs`
-  file relying on being loaded as CommonJS (`scripts/generate-sw-precache.mjs`
-  and `eslint.config.mjs` are already explicitly `.mjs`, unaffected either
-  way; `next.config.ts` and `tsconfig.json` aren't loaded via Node's own
-  CommonJS resolution at all).
+  file relying on being loaded as CommonJS (`eslint.config.mjs` is already
+  explicitly `.mjs`, unaffected either way; `next.config.ts` and
+  `tsconfig.json` aren't loaded via Node's own CommonJS resolution at
+  all).
 
-**`next.config.ts`'s `trailingSlash: true` applies to this function too,**
-not just Next's own pages — a `POST /api/chat` gets a `308` redirect to
-`/api/chat/` before it reaches the function at all. `fetch()` follows a
-`308` transparently (it preserves the method and body, unlike `301`/`302`),
-so this isn't actually broken, but `ChatBot.tsx` calls `/api/chat/`
-directly to skip the redirect round trip.
+**`next.config.ts`'s trailing-slash setting applies to this function too,**
+not just Next's own pages — Vercel bakes one canonical form into the whole
+deployment's routing, standalone functions included. This app no longer
+sets `trailingSlash: true` (removed once it broke external MCP clients
+hitting `/api/mcp` — see docs/mcp.md's "Transport" section — since a `308`
+redirect there isn't reliably followed on a `POST`), which flips the
+canonical form to the bare path: a request to `/api/chat/` now gets a
+`308` to `/api/chat`, the reverse of before. `fetch()` follows a `308`
+transparently (it preserves the method and body, unlike `301`/`302`), so
+neither direction is actually broken, but `ChatBot.tsx` calls `/api/chat`
+(no trailing slash) directly to match the current canonical form and
+skip the redirect round trip.
 
 **Preview deployments can sit behind Vercel Deployment Protection
 (SSO)**, which intercepts every request — page and function alike —
